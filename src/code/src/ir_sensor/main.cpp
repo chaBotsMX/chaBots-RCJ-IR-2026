@@ -1,11 +1,31 @@
 #include <Arduino.h>
 
-// the setup function runs once when you press reset or power the board
-void setup() {
+#include "IRSensor.h"
 
+IRSensor ir;
+
+#define IR_UPDATE_TIME 833
+
+int angle = 0;
+int intensity = 0;
+int distance = 0;
+
+unsigned long timer;
+
+unsigned long lastTime;
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
 }
 
-// the loop function runs over and over again forever
 void loop() {
+  //unsigned long loopTime = micros() - lastTime;
+  //lastTime = micros();
 
+  ir.update(IR_UPDATE_TIME);
+  
+  ir.printIR(ir.getAngle(), 0, 1000, true);
+
+  //Serial.println("1");
 }

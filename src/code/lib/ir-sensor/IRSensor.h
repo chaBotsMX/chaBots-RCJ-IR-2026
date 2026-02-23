@@ -9,8 +9,6 @@
 #define IRSensor_H
 
 #define numIR 18
-#define photodiode A15
-#define alpha 0.05
 #define maxIntensity 2100
 
 #include <Arduino.h>
@@ -49,7 +47,6 @@ class IRSensor {
     unsigned long pulseWidth[numIR], timeInHigh[numIR], timeInLow[numIR];
     
     void updateTSSP();
-    void updatePhotodiodes();
     void calculateBallVector();
 };
 
