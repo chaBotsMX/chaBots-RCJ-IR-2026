@@ -3,7 +3,7 @@
 
 IRSensor ir;
 
-#define IR_UPDATE_TIME 0
+#define IR_UPDATE_TIME 833
 
 int angle = 0;
 int intensity = 0;
