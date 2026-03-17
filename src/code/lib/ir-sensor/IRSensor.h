@@ -39,13 +39,11 @@ class IRSensor {
     };
 
     //variables and locals
-    int rawAngle = -1;
+    int rawAngle = 500;
 
     bool tsspDetected[numTSSP][bufferSize]; //matrix with tssp states over time
     int bufferIndex = 0;
     int tsspTimesDetected[numTSSP];
-    int consecutiveDetections[numTSSP];
-    unsigned long lastDetectionTime[numTSSP];
     
     void updateTSSP();
     void calculateBallVector();

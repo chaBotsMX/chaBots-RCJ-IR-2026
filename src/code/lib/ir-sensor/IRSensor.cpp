@@ -29,12 +29,6 @@ void IRSensor::updateTSSP(){
   for(int i = 0; i < numTSSP; i++){
     bool currentDetection = !digitalReadFast(tssp[i]);
     tsspDetected[i][bufferIndex] = currentDetection;
-    
-    if(currentDetection){
-      consecutiveDetections[i]++;
-    } else {
-      consecutiveDetections[i] = 0;
-    }
   }
 
   bufferIndex++;
