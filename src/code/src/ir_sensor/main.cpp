@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "IRSensor.h"
+#include "ir-sensor/IRSensor.h"
 
 IRSensor ir;
 
@@ -23,6 +23,6 @@ void loop() {
   if(millis() > timer){
     timer = millis() + 200;
     
-    ir.printIR();
+    //ir.printIR();
   }
 }
