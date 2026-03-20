@@ -51,9 +51,22 @@ void IRSensor::updateTSSP(){
 void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numSensors; i++){
     int currentDetection = analogRead(photodiodes[i]);
+    photodiodeReadings[i] = currentDetection;
     Serial.print(currentDetection); Serial.print('\t');
   }
   Serial.println();
+}
+
+bool IRSensor::isBallDetected(){
+  for(int i = 0; i < numSensors; i++){
+    if(tsspTimesDetected[i] > 0 or photodiodeReadings[i] < 600) return true;
+  }
+  return false;
+}
+
+bool IRSensor::usingTSSP(){
+  //todo: add logic for switching between tssp and photodiodes based on ball's distance
+  return false;
 }
 
 void IRSensor::calculateBallVector(){
@@ -61,9 +74,15 @@ void IRSensor::calculateBallVector(){
   int sensorsReading = 0;
 
   for(int i = 0; i < numSensors; i++){
-    if(tsspTimesDetected[i] > 0){
-      sumX += tsspTimesDetected[i] * vectorX[i];
-      sumY += tsspTimesDetected[i] * vectorY[i];
+    if(isBallDetected()){
+      if(usingTSSP()){
+        sumX += tsspTimesDetected[i] * vectorX[i];
+        sumY += tsspTimesDetected[i] * vectorY[i];
+      }
+      else{
+        sumX += abs(1023 - photodiodeReadings[i]) * vectorX[i];
+        sumY += abs(1023 - photodiodeReadings[i]) * vectorY[i];
+      }
       sensorsReading++;
     }
   }

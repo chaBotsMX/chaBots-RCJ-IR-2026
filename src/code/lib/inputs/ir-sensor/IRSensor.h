@@ -68,12 +68,15 @@ class IRSensor {
     int rawAngle = 500;
 
     bool tsspDetected[numSensors][bufferSize]; //matrix with tssp states over time
+    int photodiodeReadings[numSensors];
     int bufferIndex = 0;
     int tsspTimesDetected[numSensors];
     
     void updateTSSP();
     void updatePhotodiodes();
     void calculateBallVector();
+    bool isBallDetected();
+    bool usingTSSP();
 };
 
 #endif
