@@ -99,14 +99,25 @@ int IRSensor::getAngle(){
   return rawAngle;
 }
 
-void IRSensor::printIR(){
-  Serial.print("TSSP: ");
-  for(int i = 0; i < 100; i++){
-    for(int j = 0; j < 16; j++){
-      Serial.print(tsspDetected[j][i]); Serial.print('\t');
-    }
-    Serial.println();
-  }
+int IRSensor::getDistance(){
+  return distance;
+}
+
+void IRSensor::printIR(unsigned long timeLimit){
+  static unsigned long lastUpdate = 0;
   
-  //Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n');
+  if((millis() - lastUpdate) >= timeLimit){
+    lastUpdate = millis();
+
+    Serial.print("TSSP: ");
+
+    for(int i = 0; i < 100; i++){
+      for(int j = 0; j < 16; j++){
+        Serial.print(tsspDetected[j][i]); Serial.print('\t');
+      }
+      Serial.println();
+    }
+    
+    //Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n'); 
+  }
 }

@@ -1,11 +1,34 @@
 #include <Arduino.h>
+#include "drive/Drive.h"
+#include "imu/IMU.h"
+#include "UART.h"
+#include "pd-control/PD.h"
 
-// the setup function runs once when you press reset or power the board
+Drive drive;
+IMU imu;
+UART uart(Serial8, Serial5);
+PD pd(1.85, 0.1, 160);
+
+unsigned long long updateTimer = 0;
+
+int yawCorrection = 0;
+
 void setup() {
+  Serial.begin(115200);
+  delay(1000);
 
+  if (!imu.begin()) {
+    Serial.println("imu not found");
+  }
 }
 
-// the loop function runs over and over again forever
 void loop() {
+  uart.receive();
 
+  if(millis() - updateTimer >= 10){
+    updateTimer = millis();
+    if(imu.update()) yawCorrection = pd.getCorrection(imu.getYaw());
+  }
+
+  drive.driveToAngle(uart.irAngle, 160, yawCorrection);
 }

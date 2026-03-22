@@ -17,9 +17,13 @@ class IRSensor {
   public:
     IRSensor();
     void update(unsigned long timeLimit);
-    void printIR();
+    void printIR(unsigned long timeLimit);
+
+    bool isBallDetected();
+    bool usingTSSP();
 
     int getAngle();
+    int getDistance();
 
   private:
     //constants
@@ -66,6 +70,7 @@ class IRSensor {
 
     //variables and locals
     int rawAngle = 500;
+    int distance = 100;
 
     bool tsspDetected[numSensors][bufferSize]; //matrix with tssp states over time
     int photodiodeReadings[numSensors];
@@ -75,8 +80,6 @@ class IRSensor {
     void updateTSSP();
     void updatePhotodiodes();
     void calculateBallVector();
-    bool isBallDetected();
-    bool usingTSSP();
 };
 
 #endif

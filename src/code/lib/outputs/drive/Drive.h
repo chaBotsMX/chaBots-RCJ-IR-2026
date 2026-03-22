@@ -14,15 +14,16 @@
 class Drive{
   public:
     Drive();
-    void driveToAngle(int angle, int power, int rotation);
+    void driveToAngle(int angle, int power, int rotation = 0);
     void writeMotorOutput(int motor, int power);
     void writeAllMotorsOutput(int power);
+    void brake();
   private:
-    const int pwmPins[4] = {0, 0, 0, 0};
-    const int in1Pins[4] = {0, 0, 0, 0};
-    const int in2Pins[4] = {0, 0, 0, 0};
+    const int pwmFowardPins[4] = {14, 36, 12, 10};
+    const int pwmReversePins[4] = {15, 37, 11, 9};
     static const int fr = 0, br = 1, bl = 2, fl = 3;
     float scale = 0;
+    static const int minPWM = 10;
 };
 
 #endif
