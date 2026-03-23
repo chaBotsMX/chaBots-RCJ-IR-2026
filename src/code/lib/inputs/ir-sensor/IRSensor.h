@@ -9,7 +9,7 @@
 #define IRSensor_H
 
 #define numSensors 16
-#define bufferSize 100
+#define bufferSize 60
 
 #include <Arduino.h>
 
@@ -76,6 +76,7 @@ class IRSensor {
     int photodiodeReadings[numSensors];
     int bufferIndex = 0;
     int tsspTimesDetected[numSensors];
+    int consecutiveDetections[numSensors];
     
     void updateTSSP();
     void updatePhotodiodes();

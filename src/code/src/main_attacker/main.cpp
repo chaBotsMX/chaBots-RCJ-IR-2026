@@ -17,7 +17,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  if (!imu.begin()) {
+  if (!imu.begin(Serial7)) {
     Serial.println("imu not found");
   }
 }

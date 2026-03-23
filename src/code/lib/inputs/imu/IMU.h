@@ -14,7 +14,7 @@
 class IMU {
   public:
     IMU();
-    bool begin();
+    bool begin(HardwareSerial& imuPort);
     bool update();
     float getYaw();
   private:
