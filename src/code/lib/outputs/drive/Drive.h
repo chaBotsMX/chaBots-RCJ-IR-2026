@@ -19,8 +19,8 @@ class Drive{
     void writeAllMotorsOutput(int power);
     void brake();
   private:
-    const int pwmFowardPins[4] = {14, 36, 12, 10};
-    const int pwmReversePins[4] = {15, 37, 11, 9};
+    const int pwmFowardPins[4] = {14, 36, 11, 9};
+    const int pwmReversePins[4] = {15, 37, 12, 10};
     static const int fr = 0, br = 1, bl = 2, fl = 3;
     float scale = 0;
     static const int minPWM = 10;

@@ -21,6 +21,9 @@ class UART {
     int irDistance = 100;
     int lineAngle = 500;
 
+    DataReceiver irReceiver   = DataReceiver(2); //angle and distance
+    DataReceiver lineReceiver = DataReceiver(1); // angle
+
     //main
     UART(HardwareSerial& irPort, HardwareSerial& linePort)
       : _irSerial(&irPort), _lineSerial(&linePort) {}
@@ -35,7 +38,7 @@ class UART {
 
     void begin(long baud) {
       if(_irSerial) _irSerial->begin(baud);
-      if(_lineSerial) _lineSerial->begin(baud);
+      //if(_lineSerial) _lineSerial->begin(baud);
     }
 
     void receive() {
@@ -47,12 +50,12 @@ class UART {
         }
       }
 
-      while (_lineSerial->available()) {
+/*       while (_lineSerial->available()) {
         lineReceiver.feed(_lineSerial->read());
         if (lineReceiver.ready) {
           lineAngle = lineReceiver.data[0];
         }
-      }
+      } */
     }
 
     void sendIR(uint8_t angle, uint8_t distance) {
@@ -71,9 +74,6 @@ class UART {
   private:
     HardwareSerial* _irSerial;
     HardwareSerial* _lineSerial;
-
-    DataReceiver irReceiver   = DataReceiver(2); //angle and distance
-    DataReceiver lineReceiver = DataReceiver(1); // angle
 };
 
 #endif

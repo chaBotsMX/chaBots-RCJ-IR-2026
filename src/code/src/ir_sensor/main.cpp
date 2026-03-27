@@ -25,38 +25,12 @@ void loop() {
   ir.printIR(100); //print readings every 100ms
 
   if(millis() > timer){
-    timer = millis() + 2;
-    if(ir.isBallDetected()){
-      angle = ir.getAngle();
-      distance = ir.getDistance();
+    timer = millis() + 4;
+    //if(ir.isBallDetected()){
+    angle = ir.getAngle();
+    distance = ir.getDistance();
 
-      uart.sendIR(angle, distance);
-    }
+    uart.sendIR(angle/2, 1);
+    //}
   }
-
-/*   static unsigned long lastLoop = 0;
-  static int actualUpdates = 0;
-  static int totalLoops = 0;
-  
-  unsigned long before = micros();
-  ir.update(833);
-  unsigned long after = micros();
-  
-  totalLoops++;
-  
-  // Check if update actually ran (took time)
-  if(after - before > 10){  // If it took >10µs, it ran
-    actualUpdates++;
-  }
-  
-  if(millis() - lastLoop > 1000){
-    Serial.print("Total loops: ");
-    Serial.print(totalLoops);
-    Serial.print(" | Actual IR updates: ");
-    Serial.println(actualUpdates);
-    
-    actualUpdates = 0;
-    totalLoops = 0;
-    lastLoop = millis();
-  } */
 }
