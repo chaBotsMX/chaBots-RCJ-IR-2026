@@ -21,7 +21,7 @@ void Drive::driveToAngle(int angle, int power, int rotation = 0){
   power = constrain(power, 0, 250);
   rotation = constrain(rotation, -250, 250);
   
-  float angleRad = radians(angle - 45);
+  float angleRad = radians(angle + 45);
 
   float frPower =  power * cos(angleRad);  // Front-Right
   float flPower =  power * sin(angleRad);  // Front-Left  

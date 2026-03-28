@@ -70,7 +70,7 @@ class IRSensor {
 
     //variables and locals
     int rawAngle = 500;
-    int distance = 100;
+    int magnitude = -1;
 
     bool tsspDetected[numSensors][bufferSize]; //matrix with tssp states over time
     int photodiodeReadings[numSensors];

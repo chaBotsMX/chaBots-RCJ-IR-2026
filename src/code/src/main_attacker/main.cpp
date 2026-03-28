@@ -7,11 +7,41 @@
 Drive drive;
 IMU imu;
 UART uart(Serial8, Serial5);
-PD pd(3.1666, 0.06, 160);
+PD pd(4, 0.1, 200);
 
 unsigned long long updateTimer = 0;
 
 int yawCorrection = 0;
+
+bool ballDetected(){
+  if(uart.irAngle*2 <= 360) return true;
+  return false;
+}
+
+int adjustBallAngleClose(int angle){
+  if(angle > 360 || angle < 0){
+    return 500;  // Invalid angle
+  }
+  
+  // Right side: 271° to 79° (wrapping around 0°)
+  if(angle > 270 || angle < 65){
+    int adjusted = angle - 90;
+    // Fix negative modulo
+    if(adjusted < 0) adjusted += 360;
+    return adjusted;
+  }
+  // Left side: 101° to 269°
+  else if(angle > 115 && angle < 270){
+    int adjusted = angle + 90;
+    // Handle wrap-around
+    if(adjusted >= 360) adjusted -= 360;
+    return adjusted;
+  }
+  // Front: 80° to 100° - go straight
+  else{
+    return 90;
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -33,5 +63,7 @@ void loop() {
     Serial.print("IR Angle: ");Serial.println(uart.irAngle*2);
   }
 
-  drive.driveToAngle(uart.irAngle*2, 160, yawCorrection);
+  if(ballDetected()) drive.driveToAngle(adjustBallAngleClose(uart.irAngle*2), 200, yawCorrection);
+  else drive.writeAllMotorsOutput(yawCorrection);
+  //drive.writeAllMotorsOutput(20);
 }

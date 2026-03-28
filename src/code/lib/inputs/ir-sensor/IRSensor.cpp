@@ -13,6 +13,12 @@ IRSensor::IRSensor(){
     pinMode(tssp[i], INPUT);
     pinMode(photodiodes[i], INPUT);
   }
+
+  for(int i = 0; i < numSensors; i++){
+    tsspTimesDetected[i] = 0;
+    consecutiveDetections[i] = 0;
+    photodiodeReadings[i] = 1023;
+  }
 }
 
 void IRSensor::update(unsigned long timeLimit){
@@ -22,8 +28,14 @@ void IRSensor::update(unsigned long timeLimit){
     lastUpdate = micros();
     
     updateTSSP();
-    //updatePhotodiodes();
     calculateBallVector();
+  }
+
+  // Update photodiodes at SLOWER rate (not every loop!)
+  static unsigned long lastPhotoUpdate = 0;
+  if((millis() - lastPhotoUpdate) >= 5){  // Only every 10ms
+    lastPhotoUpdate = millis();
+    updatePhotodiodes();
   }
 }
 
@@ -95,7 +107,7 @@ void IRSensor::calculateBallVector(){
     }
   }else{
     for(int i = 0; i < numSensors; i++){
-      if(photodiodeReadings[i] < 600){
+      if(photodiodeReadings[i] < 900){
         sumX += 1023 - photodiodeReadings[i] * vectorX[i];
         sumY += 1023 - photodiodeReadings[i] * vectorY[i];
         sensorsReading++;
@@ -108,6 +120,10 @@ void IRSensor::calculateBallVector(){
     double theta = degrees(atan2(sumY, sumX));
     if (theta < 0) theta+=360;
     rawAngle = (int)theta;
+
+    if(usingTSSP()){
+      magnitude = sqrt((sumX * sumX) + (sumY * sumY));
+    }
   }
 }
 
@@ -116,7 +132,7 @@ int IRSensor::getAngle(){
 }
 
 int IRSensor::getDistance(){
-  return distance;
+  return magnitude;
 }
 
 void IRSensor::printIR(unsigned long timeLimit){
@@ -126,13 +142,15 @@ void IRSensor::printIR(unsigned long timeLimit){
     lastUpdate = millis();
 
     //for(int i = 0; i < 100; i++){
-      Serial.print("TSSP: ");
+      Serial.print("tssp: ");
       for(int j = 0; j < 16; j++){
         Serial.print(tsspTimesDetected[j]); Serial.print('\t');
+        //Serial.print(photodiodeReadings[j]); Serial.print('\t');
       }
       //Serial.println();
     //}
     
-    Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n'); 
+    Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\t'); 
+    Serial.print("Magnitude: "); Serial.print(magnitude); Serial.print('\n');
   }
 }
