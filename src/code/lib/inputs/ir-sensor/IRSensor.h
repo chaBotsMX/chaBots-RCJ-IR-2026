@@ -77,6 +77,11 @@ class IRSensor {
     int bufferIndex = 0;
     int tsspTimesDetected[numSensors];
     int consecutiveDetections[numSensors];
+
+    float filteredX = 0;
+    float filteredY = 0;
+    float filterAlpha = 0.2; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
+    int smoothAngle = 500;
     
     void updateTSSP();
     void updatePhotodiodes();

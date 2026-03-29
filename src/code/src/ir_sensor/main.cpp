@@ -20,7 +20,7 @@ void setup() {
 }
 
 void loop() {
-  ir.update(833); //update sensors every loop
+  ir.update(600); //update sensors every loop
   
   ir.printIR(100); //print readings every 100ms
 
