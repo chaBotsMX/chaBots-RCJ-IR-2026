@@ -9,9 +9,19 @@
 #include "IRSensor.h"
 
 IRSensor::IRSensor(){
-  for (int i = 0; i < numTSSP; i++) {
+  for (int i = 0; i < numSensors; i++) {
     pinMode(tssp[i], INPUT);
+    pinMode(photodiodes[i], INPUT);
   }
+
+  for(int i = 0; i < numSensors; i++){
+    tsspTimesDetected[i] = 0;
+    consecutiveDetections[i] = 0;
+    photodiodeReadings[i] = 1023;
+  }
+
+  analogReadResolution(12);
+  analogReadAveraging(1);
 }
 
 void IRSensor::update(unsigned long timeLimit){
@@ -23,51 +33,146 @@ void IRSensor::update(unsigned long timeLimit){
     updateTSSP();
     calculateBallVector();
   }
+
+  // Update photodiodes at SLOWER rate (not every loop!)
+  static unsigned long lastPhotoUpdate = 0;
+  if((millis() - lastPhotoUpdate) >= 5){  // Only every 10ms
+    lastPhotoUpdate = millis();
+    updatePhotodiodes();
+  }
 }
 
 void IRSensor::updateTSSP(){  
-  for(int i = 0; i < numTSSP; i++){
+  for(int i = 0; i < numSensors; i++){
     bool currentDetection = !digitalReadFast(tssp[i]);
+    //Serial.print(currentDetection); Serial.print('\t');
     tsspDetected[i][bufferIndex] = currentDetection;
+
+    if(currentDetection){
+      consecutiveDetections[i]++;
+    } else {
+      consecutiveDetections[i] = 0;
+    }
   }
+
+  //Serial.println();
 
   bufferIndex++;
   if(bufferIndex >= bufferSize) bufferIndex = 0;
 
-  for(int i = 0; i < numTSSP; i++){
+  for(int i = 0; i < numSensors; i++){
     int counter = 0;
     for(int j = 0; j < bufferSize; j++){
       if(tsspDetected[i][j]) counter++;
     }
-   tsspTimesDetected[i] = counter;
+
+/*     if(counter > 0 && consecutiveDetections[i] >= 0){
+      tsspTimesDetected[i] = counter;
+    } else {
+      tsspTimesDetected[i] = 0;  //filter
+    } */
+    tsspTimesDetected[i] = counter;
+    if(tsspTimesDetected[i] < 10) tsspTimesDetected[i] = 0;
   }
+}
+
+void IRSensor::updatePhotodiodes(){
+  for(int i = 0; i < numSensors; i++){
+    int currentDetection = analogRead(photodiodes[i]);
+    photodiodeReadings[i] = currentDetection;
+    //Serial.print(currentDetection); Serial.print('\t');
+  }
+  //Serial.println();
+}
+
+bool IRSensor::isBallDetected(){
+  for(int i = 0; i < numSensors; i++){
+    if(tsspTimesDetected[i] > 0 or photodiodeReadings[i] < 600) return true;
+  }
+  return false;
+}
+
+bool IRSensor::usingTSSP(){
+  //todo: add logic for switching between tssp and photodiodes based on ball's distance
+  return true;
 }
 
 void IRSensor::calculateBallVector(){
   float sumX = 0, sumY = 0;
   int sensorsReading = 0;
 
-  for(int i = 0; i < numTSSP; i++){
-    if(tsspTimesDetected[i] > 0){
-      sumX += tsspTimesDetected[i] * vectorX[i];
-      sumY += tsspTimesDetected[i] * vectorY[i];
-      sensorsReading++;
+  if(usingTSSP()){
+    // Find peak count
+    int peakCount = 0;
+    for(int i = 0; i < numSensors; i++){
+      if(tsspTimesDetected[i] > peakCount){
+        peakCount = tsspTimesDetected[i];
+      }
+    }
+
+    int threshold = peakCount * 0.8;  // Only consider sensors with at least 90% of the peak count
+
+    for(int i = 0; i < numSensors; i++){
+      if(tsspTimesDetected[i] >= threshold and threshold > 0){
+        sumX += tsspTimesDetected[i] * vectorX[i];
+        sumY += tsspTimesDetected[i] * vectorY[i];
+        sensorsReading++;
+      }
+    }
+  }else{
+    for(int i = 0; i < numSensors; i++){
+      if(photodiodeReadings[i] < 900){
+        sumX += 1023 - photodiodeReadings[i] * vectorX[i];
+        sumY += 1023 - photodiodeReadings[i] * vectorY[i];
+        sensorsReading++;
+      }
     }
   }
   
   if(sensorsReading == 0) rawAngle = 500;
-  else rawAngle = degrees(atan2(sumY, sumX)) + 180;
+  else{
+    double theta = degrees(atan2(sumY, sumX));
+    if (theta < 0) theta+=360;
+    rawAngle = (int)theta;
+
+    // Apply Linear Filter to the VECTORS
+    filteredX = (sumX * filterAlpha) + (filteredX * (1.0 - filterAlpha));
+    filteredY = (sumY * filterAlpha) + (filteredY * (1.0 - filterAlpha));
+
+    // Calculate the Smooth Angle from the filtered vectors
+    double smoothTheta = degrees(atan2(filteredY, filteredX));
+    if (smoothTheta < 0) smoothTheta += 360;
+    smoothAngle = (int)smoothTheta;
+
+    if(usingTSSP()){
+      magnitude = sqrt((sumX * sumX) + (sumY * sumY));
+    }
+  }
 }
 
 int IRSensor::getAngle(){
-  return rawAngle;
+  return smoothAngle;
 }
 
-void IRSensor::printIR(){
-  Serial.print("Times detected: ");
-  for(unsigned long t : tsspTimesDetected){
-    Serial.print(t); Serial.print('\t');
-  }
+int IRSensor::getDistance(){
+  return magnitude;
+}
+
+void IRSensor::printIR(unsigned long timeLimit){
+  static unsigned long lastUpdate = 0;
   
-  Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n');
+  if((millis() - lastUpdate) >= timeLimit){
+    lastUpdate = millis();
+
+    //for(int i = 0; i < 100; i++){
+      Serial.print("photo: ");
+      for(int j = 0; j < 16; j++){
+        Serial.print(tsspTimesDetected[j]); Serial.print('\t');
+        //Serial.print(photodiodeReadings[j]); Serial.print('\t');
+      }
+      //Serial.println();
+    //}
+    
+    Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n'); 
+  }
 }

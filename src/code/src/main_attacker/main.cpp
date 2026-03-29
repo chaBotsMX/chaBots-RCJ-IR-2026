@@ -1,11 +1,69 @@
 #include <Arduino.h>
+#include "drive/Drive.h"
+#include "imu/IMU.h"
+#include "UART.h"
+#include "pd-control/PD.h"
 
-// the setup function runs once when you press reset or power the board
-void setup() {
+Drive drive;
+IMU imu;
+UART uart(Serial8, Serial5);
+PD pd(4, 0.1, 200);
 
+unsigned long long updateTimer = 0;
+
+int yawCorrection = 0;
+
+bool ballDetected(){
+  if(uart.irAngle*2 <= 360) return true;
+  return false;
 }
 
-// the loop function runs over and over again forever
-void loop() {
+int adjustBallAngleClose(int angle){
+  if(angle > 360 || angle < 0){
+    return 500;  // Invalid angle
+  }
+  
+  // Right side: 271° to 79° (wrapping around 0°)
+  if(angle > 270 || angle < 65){
+    int adjusted = angle - 90;
+    // Fix negative modulo
+    if(adjusted < 0) adjusted += 360;
+    return adjusted;
+  }
+  // Left side: 101° to 269°
+  else if(angle > 115 && angle < 270){
+    int adjusted = angle + 90;
+    // Handle wrap-around
+    if(adjusted >= 360) adjusted -= 360;
+    return adjusted;
+  }
+  // Front: 80° to 100° - go straight
+  else{
+    return 90;
+  }
+}
 
+void setup() {
+  Serial.begin(115200);
+  uart.begin(1000000);
+  delay(1000);
+
+  if (!imu.begin(Serial7)) {
+    Serial.println("imu not found");
+  }
+}
+
+void loop() {
+  uart.receive();
+
+  if(millis() - updateTimer >= 10){
+    updateTimer = millis();
+    if(imu.update()) yawCorrection = pd.getCorrection(imu.getYaw());
+    Serial.println(imu.getYaw());
+    Serial.print("IR Angle: ");Serial.println(uart.irAngle*2);
+  }
+
+  if(ballDetected()) drive.driveToAngle(adjustBallAngleClose(uart.irAngle*2), 100, yawCorrection);
+  else drive.writeAllMotorsOutput(yawCorrection);
+  //drive.writeAllMotorsOutput(20);
 }

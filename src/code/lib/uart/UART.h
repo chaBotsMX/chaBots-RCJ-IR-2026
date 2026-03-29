@@ -10,169 +10,70 @@
 #define UART_H
 
 #include <Arduino.h>
+#include "DataReceiver.h"
 
-#define IRSerial Serial7
-#define LineSerial Serial5
-#define CameraSerial Serial8
-#define DisplaySerial Serial1
+struct IRBoard   {};
+struct LineBoard {};
 
 class UART {
   public:
-    UART(){
-      irState = WAIT_FOR_START;
-      lineState = WAIT_FOR_START;
-    };
-    
-    void beginIR(long baud){
-      IRSerial.begin(baud);
-      IRSerial.clear();
-    };
+    int irAngle = 500;
+    int irDistance = 100;
+    int lineAngle = 500;
 
-    void beginLine(long baud){
-      LineSerial.begin(baud);
-      LineSerial.clear();
-    };
+    DataReceiver irReceiver   = DataReceiver(2); //angle and distance
+    DataReceiver lineReceiver = DataReceiver(1); // angle
 
-    void beginCamera(long baud){
-      CameraSerial.begin(baud);
-      CameraSerial.clear();
-    };
+    //main
+    UART(HardwareSerial& irPort, HardwareSerial& linePort)
+      : _irSerial(&irPort), _lineSerial(&linePort) {}
 
-    void beginDisplay(long baud){
-      DisplaySerial.begin(baud);
-    };
+    //ir
+    UART(HardwareSerial& port, IRBoard)
+      : _irSerial(&port), _lineSerial(nullptr) {}
 
-    void receiveIRData(){
-      while (IRSerial.available()) {
-        checkIRData(IRSerial.read());
+    //line
+    UART(HardwareSerial& port, LineBoard)
+      : _irSerial(nullptr), _lineSerial(&port) {}
+
+    void begin(long baud) {
+      if(_irSerial) _irSerial->begin(baud);
+      //if(_lineSerial) _lineSerial->begin(baud);
+    }
+
+    void receive() {
+      while (_irSerial->available()) {
+        irReceiver.feed(_irSerial->read());
+        if (irReceiver.ready) {
+          irAngle = irReceiver.data[0];
+          irDistance = irReceiver.data[1];
+        }
       }
-    };
 
-    void receiveLineData(){
-      while (LineSerial.available()) {
-        checkLineData(LineSerial.read());
-      }
-    };
-
-    void receiveCameraData(){
-      if(CameraSerial.available()){
-        checkCameraData(CameraSerial.read());
-      }
-    };
-
-    int getIRAngle(){
-      return angleIR;
+/*       while (_lineSerial->available()) {
+        lineReceiver.feed(_lineSerial->read());
+        if (lineReceiver.ready) {
+          lineAngle = lineReceiver.data[0];
+        }
+      } */
     }
 
-    int getIRIntensity(){
-      return intensityIR;
+    void sendIR(uint8_t angle, uint8_t distance) {
+      if(_irSerial == nullptr) return;
+      _irSerial->write(255);
+      _irSerial->write(angle);
+      _irSerial->write(distance);
     }
 
-    int getIRDistance(){
-      return distanceIR;
-    }
-
-    int getLineAngle(){
-      return angleLS;
-    }
-
-    int getBlobX(){
-      return blobX;
-    }
-
-    int getBlobY(){
-      return blobY;
-    }
-
-    int getBluetoothSignal(){
-      return bluetoothSignal;
+    void sendLine(uint8_t angle) {
+      if(_lineSerial == nullptr) return;
+      _lineSerial->write(255);
+      _lineSerial->write(angle);
     }
 
   private:
-    int angleIR = 500;
-    int intensityIR = 0;
-    int distanceIR = 100;
-    int bluetoothSignal = 0;
-
-    int angleLS = 500;
-
-    int blobX = 250, blobY = 250;
-
-    unsigned long lastIRByteTime = 0;
-    unsigned long lastLSByteTime = 0;
-
-    enum DataState {
-      WAIT_FOR_START,
-      DATA_1,
-      DATA_2,
-      DATA_3,
-      DATA_4
-    };
-
-    DataState irState = WAIT_FOR_START;
-
-    void checkIRData(uint8_t data){
-      switch(irState) {
-        case WAIT_FOR_START:
-          if(data == 255) irState = DATA_1;
-          break;
-
-        case DATA_1:
-          angleIR = data * 2;
-          irState = DATA_2;
-          break;
-
-        case DATA_2:
-          intensityIR = data;
-          irState = DATA_3;
-          break;
-
-        case DATA_3:
-          distanceIR = data;
-          irState = DATA_4;
-          break;
-
-        case DATA_4:
-          bluetoothSignal = data;
-          irState = WAIT_FOR_START;
-          break;
-      }
-    };
-
-    DataState lineState = WAIT_FOR_START;
-
-    void checkLineData(uint8_t data){
-      switch(lineState) {
-        case WAIT_FOR_START:
-          if(data == 255) lineState = DATA_1;
-          break;
-
-        case DATA_1:
-          angleLS = data * 2;
-          lineState = WAIT_FOR_START;
-          break;
-      }
-    };
-
-    DataState cameraState = WAIT_FOR_START;
-
-    void checkCameraData(uint8_t data){
-      switch(cameraState){
-        case WAIT_FOR_START:
-          if(data == 255) cameraState = DATA_1;
-          break;
-
-        case DATA_1:
-          blobX = data * 2;
-          cameraState = DATA_2;
-          break;
-
-        case DATA_2:
-          blobY = data;
-          cameraState = WAIT_FOR_START;
-          break;
-      }
-    }
+    HardwareSerial* _irSerial;
+    HardwareSerial* _lineSerial;
 };
 
 #endif

@@ -22,46 +22,20 @@ void LineSensor::begin(){
     pixels.setPixelColor(i, pixels.Color(250, 0, 0));
     pixels.show();
   }
-
-  unsigned long start = millis();
-  while(millis() - start < 100){}
-
-  if(calibrate){
-    Serial.print("green val ");
-    for(int i = 0; i < numSensors; i++){
-      minGreenValue[i] = 1023;
-      //greenValues[i] = analogRead(diodes[i]); //Serial.print(greenValues[i]); Serial.print('\t');
-      for(int j = 0; j < 20; j++){
-        if(analogRead(diodes[i]) < minGreenValue[i]){
-          minGreenValue[i] = analogRead(diodes[i]);
-        }
-      }
-      Serial.print(minGreenValue[i]); Serial.print('\t');
-    }
-    Serial.println();
-  } else{
-    for(int i = 0; i < numSensors; i++){
-      greenValues[i] = defaultGreenValue;
-    }
-  }
-
-  pixels.clear();
-  pixels.show();
-  delay(400);
-  
-  for(int i = numSensors; i >= 0; i--){
-    unsigned long start = millis();
-    while(millis() - start < 50){}
-    pixels.setPixelColor(i, pixels.Color(250, 0, 0));
-    pixels.show();
-  }
 }
 
 void LineSensor::update(){
   for(int i = 0; i < numSensors; i++){
-    readings[i] = analogRead(diodes[i]);
+    readings[i] = digitalReadFast(comparators[i]);
   }
   calculateLineVector();
+}
+
+bool LineSensor::isLineDetected(){
+  for(int i = 0; i < numSensors; i++){
+    if(readings[i]) return true;
+  }
+  return false;
 }
 
 void LineSensor::calculateLineVector(){
@@ -70,8 +44,7 @@ void LineSensor::calculateLineVector(){
   int sensorsReading = 0;
 
   for(int i = 0; i < numSensors; i++){
-    if(i == 8 || i == 9) continue;
-    if(readings[i] < minGreenValue[i] - 60){
+    if(isLineDetected()){
       sumX += vectorX[i];
       sumY += vectorY[i];
       sensorsReading++;
@@ -79,14 +52,25 @@ void LineSensor::calculateLineVector(){
   }
 
   if(sensorsReading == 0) angle = 500;
-  else angle = (atan2(sumY, sumX) * (180.0 / M_PI)) + 180;
+  else{
+    double theta = degrees(atan2(sumY, sumX));
+    if (theta < 0) theta+=360;
+    angle = (int)theta;
+  }
 }
 
-void LineSensor::printLS(){
-  for(int i = 0; i< numSensors; i++){
-    Serial.print(readings[i]); Serial.print('\t');
+void LineSensor::printLS(unsigned long timeLimit){
+  static unsigned long lastUpdate = 0;
+
+  if((millis() - lastUpdate) >= timeLimit){
+    lastUpdate = millis();
+
+    for(int i = 0; i< numSensors; i++){
+      Serial.print(readings[i]); Serial.print('\t');
+    }
+
+    Serial.println();
   }
-  Serial.println();
 }
 
 int LineSensor::getAngle(){

@@ -12,8 +12,8 @@ IMU::IMU(){
   yaw = 0.0;
 }
 
-bool IMU::begin(){
-  if (!bno08x.begin_UART(&Serial2)) {
+bool IMU::begin(HardwareSerial& imuPort){
+  if (!bno08x.begin_UART(&imuPort)) {
     return false;
   }
   bno08x.enableReport(SH2_GAME_ROTATION_VECTOR);
