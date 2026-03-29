@@ -63,7 +63,7 @@ void loop() {
     Serial.print("IR Angle: ");Serial.println(uart.irAngle*2);
   }
 
-  if(ballDetected()) drive.driveToAngle(adjustBallAngleClose(uart.irAngle*2), 100, yawCorrection);
+  if(ballDetected()) drive.driveToAngle(adjustBallAngleClose(uart.irAngle*2), 180, yawCorrection);
   else drive.writeAllMotorsOutput(yawCorrection);
   //drive.writeAllMotorsOutput(20);
 }
