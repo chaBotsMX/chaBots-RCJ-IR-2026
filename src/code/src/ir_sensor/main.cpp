@@ -5,10 +5,10 @@
 IRSensor ir;
 UART uart(Serial7, IRBoard{});
 
-#define IR_UPDATE_TIME 1666
+#define IR_UPDATE_TIME 600
 
 int angle = 0;
-int distance = 0;
+int isBallClose = 0;
 
 unsigned long timer = 0;
 
@@ -20,17 +20,15 @@ void setup() {
 }
 
 void loop() {
-  ir.update(600); //update sensors every loop
+  ir.update(IR_UPDATE_TIME); //update sensors every loop
   
   ir.printIR(100); //print readings every 100ms
 
   if(millis() > timer){
     timer = millis() + 4;
-    //if(ir.isBallDetected()){
     angle = ir.getAngle();
-    distance = ir.getDistance();
+    isBallClose = ir.arePhotodiodesDetecting();
 
-    uart.sendIR(angle/2, 1);
-    //}
+    uart.sendIR(angle/2, isBallClose);
   }
 }

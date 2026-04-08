@@ -43,6 +43,11 @@ int adjustBallAngleClose(int angle){
   }
 }
 
+int getMovementAngle(){
+  if(uart.irClose == 1) return adjustBallAngleClose(uart.irAngle*2);
+  return uart.irAngle*2;
+}
+
 void setup() {
   Serial.begin(115200);
   uart.begin(1000000);
@@ -63,7 +68,6 @@ void loop() {
     Serial.print("IR Angle: ");Serial.println(uart.irAngle*2);
   }
 
-  if(ballDetected()) drive.driveToAngle(adjustBallAngleClose(uart.irAngle*2), 180, yawCorrection);
+  if(ballDetected()) drive.driveToAngle(getMovementAngle(), 180, yawCorrection);
   else drive.writeAllMotorsOutput(yawCorrection);
-  //drive.writeAllMotorsOutput(20);
 }

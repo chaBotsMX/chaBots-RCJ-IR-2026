@@ -8,8 +8,10 @@
 
 #include "LineSensor.h"
 
-LineSensor::LineSensor()
-  : pixels(numSensors, neoPin, NEO_GRB + NEO_KHZ800){
+LineSensor::LineSensor() : pixels(numSensors, neoPin, NEO_GRB + NEO_KHZ800){
+  for (int i = 0; i < numSensors; i++) {
+    pinMode(comparators[i], INPUT);
+  }
 }
 
 void LineSensor::begin(){

@@ -20,7 +20,7 @@ class IRSensor {
     void printIR(unsigned long timeLimit);
 
     bool isBallDetected();
-    bool usingTSSP();
+    bool arePhotodiodesDetecting();
 
     int getAngle();
     int getDistance();

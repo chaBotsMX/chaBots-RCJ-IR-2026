@@ -45,17 +45,8 @@ void IRSensor::update(unsigned long timeLimit){
 void IRSensor::updateTSSP(){  
   for(int i = 0; i < numSensors; i++){
     bool currentDetection = !digitalReadFast(tssp[i]);
-    //Serial.print(currentDetection); Serial.print('\t');
     tsspDetected[i][bufferIndex] = currentDetection;
-
-    if(currentDetection){
-      consecutiveDetections[i]++;
-    } else {
-      consecutiveDetections[i] = 0;
-    }
   }
-
-  //Serial.println();
 
   bufferIndex++;
   if(bufferIndex >= bufferSize) bufferIndex = 0;
@@ -66,13 +57,8 @@ void IRSensor::updateTSSP(){
       if(tsspDetected[i][j]) counter++;
     }
 
-/*     if(counter > 0 && consecutiveDetections[i] >= 0){
-      tsspTimesDetected[i] = counter;
-    } else {
-      tsspTimesDetected[i] = 0;  //filter
-    } */
     tsspTimesDetected[i] = counter;
-    if(tsspTimesDetected[i] < 10) tsspTimesDetected[i] = 0;
+    if(tsspTimesDetected[i] < 10) tsspTimesDetected[i] = 0; //clean noise
   }
 }
 
@@ -80,9 +66,7 @@ void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numSensors; i++){
     int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 4070); //invert and cap to 0-4095
     photodiodeReadings[i] = currentDetection;
-    //Serial.print(currentDetection); Serial.print('\t');
   }
-  //Serial.println();
 }
 
 bool IRSensor::isBallDetected(){
@@ -92,8 +76,12 @@ bool IRSensor::isBallDetected(){
   return false;
 }
 
-bool IRSensor::usingTSSP(){
-  if(magnitude <= 200) return true; //if no photodiode is reading, use TSSP
+bool IRSensor::arePhotodiodesDetecting(){
+  int count = 0;
+  for(int i = 0; i < numSensors; i++){
+    if(photodiodeReadings[i] > 5) count++;
+  }
+  if(count > 2) return true;
   return false;
 }
 
@@ -101,7 +89,15 @@ void IRSensor::calculateBallVector(){
   float sumX = 0, sumY = 0;
   int sensorsReading = 0;
 
-  if(usingTSSP()){
+  if(arePhotodiodesDetecting()){
+    for(int i = 0; i < numSensors; i++){
+      if(photodiodeReadings[i] > 5){
+        sumX += photodiodeReadings[i] * vectorX[i];
+        sumY += photodiodeReadings[i] * vectorY[i];
+        sensorsReading++;
+      }
+    }
+  }else{
     // Find peak count
     int peakCount = 0;
     for(int i = 0; i < numSensors; i++){
@@ -110,20 +106,12 @@ void IRSensor::calculateBallVector(){
       }
     }
 
-    int threshold = peakCount * 0.8;  // Only consider sensors with at least 90% of the peak count
+    int threshold = peakCount * 0.8;  // Only consider sensors with at least 80% of the peak count
 
     for(int i = 0; i < numSensors; i++){
       if(tsspTimesDetected[i] > threshold and threshold > 0){
         sumX += tsspTimesDetected[i] * vectorX[i];
         sumY += tsspTimesDetected[i] * vectorY[i];
-        sensorsReading++;
-      }
-    }
-  }else{
-    for(int i = 0; i < numSensors; i++){
-      if(photodiodeReadings[i] > 20){
-        sumX += photodiodeReadings[i] * vectorX[i];
-        sumY += photodiodeReadings[i] * vectorY[i];
         sensorsReading++;
       }
     }
@@ -144,7 +132,7 @@ void IRSensor::calculateBallVector(){
     if (smoothTheta < 0) smoothTheta += 360;
     smoothAngle = (int)smoothTheta;
 
-    if(!usingTSSP()){
+    if(arePhotodiodesDetecting()){
       magnitude = sqrt((filteredX * filteredX) + (filteredY * filteredY));
     }
   }
@@ -164,16 +152,14 @@ void IRSensor::printIR(unsigned long timeLimit){
   if((millis() - lastUpdate) >= timeLimit){
     lastUpdate = millis();
 
-    //for(int i = 0; i < 100; i++){
-      for(int j = 0; j < 16; j++){
-        //Serial.print(tsspTimesDetected[j]); Serial.print('\t');
-        Serial.print(photodiodeReadings[j]); Serial.print('\t');
-      }
-      //Serial.println();
-    //}
+    for(int j = 0; j < 16; j++){
+      //Serial.print(tsspTimesDetected[j]); Serial.print('\t');
+      Serial.print(photodiodeReadings[j]); Serial.print(' ');
+    }
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
     Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print('\t');
+    Serial.print("arePhotodiodesDetecting: "); Serial.print(arePhotodiodesDetecting()); Serial.print('\t');
     Serial.print("magnitude: "); Serial.print(magnitude); Serial.print('\n');
   }
 }
