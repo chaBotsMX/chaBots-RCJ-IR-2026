@@ -38,7 +38,7 @@ class UART {
 
     void begin(long baud) {
       if(_irSerial) _irSerial->begin(baud);
-      //if(_lineSerial) _lineSerial->begin(baud);
+      if(_lineSerial) _lineSerial->begin(baud);
     }
 
     void receive() {
@@ -50,12 +50,12 @@ class UART {
         }
       }
 
-/*       while (_lineSerial->available()) {
+      while (_lineSerial->available()) {
         lineReceiver.feed(_lineSerial->read());
         if (lineReceiver.ready) {
           lineAngle = lineReceiver.data[0];
         }
-      } */
+      }
     }
 
     void sendIR(uint8_t angle, uint8_t distance) {

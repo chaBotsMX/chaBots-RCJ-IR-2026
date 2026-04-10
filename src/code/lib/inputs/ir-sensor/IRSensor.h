@@ -21,6 +21,7 @@ class IRSensor {
 
     bool isBallDetected();
     bool arePhotodiodesDetecting();
+    bool isBallClose();
 
     int getAngle();
     int getDistance();
@@ -80,7 +81,7 @@ class IRSensor {
 
     float filteredX = 0;
     float filteredY = 0;
-    float filterAlpha = 0.01; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
+    float filterAlpha = 0.1; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
     
     void updateTSSP();

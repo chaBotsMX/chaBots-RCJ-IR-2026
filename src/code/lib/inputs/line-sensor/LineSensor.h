@@ -23,8 +23,9 @@ class LineSensor {
     bool isLineDetected();
 
   private:
-    const int neoPin = 33;
+    const int neoPin = 10;
     const int comparators[numSensors] = {36, 29, 30, 31, 32, 27, 26, 25, 24, 9, 8, 7, 6, 0, 1, 2, 3, 20, 21, 22, 23, 19, 18, 17, 16, 40, 39, 38, 37, 33, 34, 35};
+    const int vref[4] = {4, 12, 13, 28};
     Adafruit_NeoPixel pixels;
     bool readings[numSensors];
     const float vectorX[32] = {

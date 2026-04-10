@@ -15,7 +15,7 @@ unsigned long timer = 0;
 void setup() {
   Serial.begin(115200);
   Serial.println("hi");
-  uart.begin(1000000);
+  uart.begin(2000000);
   delay(1000);
 }
 
@@ -27,7 +27,7 @@ void loop() {
   if(millis() > timer){
     timer = millis() + 4;
     angle = ir.getAngle();
-    isBallClose = ir.arePhotodiodesDetecting();
+    isBallClose = ir.isBallClose();
 
     uart.sendIR(angle/2, isBallClose);
   }

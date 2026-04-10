@@ -85,6 +85,11 @@ bool IRSensor::arePhotodiodesDetecting(){
   return false;
 }
 
+bool IRSensor::isBallClose(){
+  if(magnitude > 400) return true;
+  return false;
+}
+
 void IRSensor::calculateBallVector(){
   float sumX = 0, sumY = 0;
   int sensorsReading = 0;
@@ -159,7 +164,7 @@ void IRSensor::printIR(unsigned long timeLimit){
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
     Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print('\t');
-    Serial.print("arePhotodiodesDetecting: "); Serial.print(arePhotodiodesDetecting()); Serial.print('\t');
+    Serial.print("isBallClose: "); Serial.print(isBallClose()); Serial.print('\t');
     Serial.print("magnitude: "); Serial.print(magnitude); Serial.print('\n');
   }
 }
