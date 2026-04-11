@@ -1,0 +1,41 @@
+#ifndef LINE_H
+#define LINE_H
+
+#include <Arduino.h>
+
+class LineLogic {
+    public:
+        LineLogic(){}
+        
+        bool lineDetected(int lineAngle) {
+            if(lineAngle <= 360) return true;
+            return false;
+        }
+
+        void update(int lineAngle){
+            if(!recovering){
+                if(lineDetected(lineAngle)){
+                    recoveryAngle = (lineAngle + 180) % 360;
+                    recoveryStartTime = millis();
+                    recovering = true;
+                }
+            }
+
+            if(recovering){
+                if(millis() - recoveryStartTime >= 300) recovering = false;
+            }
+        }
+
+        int getAvoidLineAngle(int lineAngle){
+            update(lineAngle);
+            if(recovering) return recoveryAngle;
+            return 500;
+        }
+
+    private:
+        int recoveryAngle = 0;
+        uint32_t recoveryStartTime = 0;
+        bool recovering = false;
+};
+
+#endif
