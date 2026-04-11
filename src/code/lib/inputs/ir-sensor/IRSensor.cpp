@@ -129,8 +129,13 @@ void IRSensor::calculateBallVector(){
     }
   }
   
-  if(sensorsReading == 0) rawAngle = 500;
-  else{
+  if(sensorsReading == 0){
+    rawAngle = 500;
+    ballVectorX = 0;
+    ballVectorY = 0;
+  } else {
+    ballVectorX = sumX;
+    ballVectorY = sumY;
     double theta = degrees(atan2(sumY, sumX));
     if (theta < 0) theta+=360;
     rawAngle = (int)theta;
@@ -175,4 +180,12 @@ void IRSensor::printIR(unsigned long timeLimit){
     
     Serial.print("Angle: "); Serial.print(rawAngle); Serial.print('\n'); 
   }
+}
+
+float IRSensor::getBallVectorX(){
+  return ballVectorX;
+}
+
+float IRSensor::getBallVectorY(){
+  return ballVectorY;
 }

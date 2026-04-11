@@ -39,20 +39,25 @@ bool LineSensor::isLineDetected(){
 }
 
 void LineSensor::calculateLineVector(){
-  double sumX = 0;
-  double sumY = 0;
+  double tempSumX = 0;
+  double tempSumY = 0;
   int sensorsReading = 0;
 
   for(int i = 0; i < numSensors; i++){
-    if(isLineDetected()){
-      sumX += vectorX[i];
-      sumY += vectorY[i];
+    if(readings[i]){
+      tempSumX += vectorX[i];
+      tempSumY += vectorY[i];
       sensorsReading++;
     }
   }
 
-  if(sensorsReading == 0) angle = 500;
-  else{
+  if(sensorsReading == 0) {
+    angle = 500;
+    sumX = 0;
+    sumY = 0;
+  } else {
+    sumX = tempSumX;
+    sumY = tempSumY;
     double theta = degrees(atan2(sumY, sumX));
     if (theta < 0) theta+=360;
     angle = (int)theta;
@@ -75,4 +80,12 @@ void LineSensor::printLS(unsigned long timeLimit){
 
 int LineSensor::getAngle(){
   return angle/2;
+}
+
+float LineSensor::getLineVectorX(){
+  return sumX;
+}
+
+float LineSensor::getLineVectorY(){
+  return sumY;
 }

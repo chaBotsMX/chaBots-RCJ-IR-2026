@@ -24,6 +24,8 @@ class IRSensor {
 
     int getAngle();
     int getDistance();
+    float getBallVectorX();
+    float getBallVectorY();
 
   private:
     //constants
@@ -82,6 +84,8 @@ class IRSensor {
     float filteredY = 0;
     float filterAlpha = 0.2; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
+    float ballVectorX = 0;
+    float ballVectorY = 0;
     
     void updateTSSP();
     void updatePhotodiodes();

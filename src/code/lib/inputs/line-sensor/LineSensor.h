@@ -21,6 +21,8 @@ class LineSensor {
     void printLS(unsigned long timeLimit);
     int getAngle();
     bool isLineDetected();
+    float getLineVectorX();
+    float getLineVectorY();
 
   private:
     const int neoPin = 33;
@@ -98,6 +100,8 @@ class LineSensor {
     };
     void calculateLineVector();
     int angle = 0;
+    float sumX = 0;
+    float sumY = 0;
 };
 
 #endif
