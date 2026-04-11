@@ -32,7 +32,7 @@ void setup() {
 
 void loop() {
   uart.receive();
-  robot.kicker.update();
+  //robot.kicker.update();
 
   irAngle = uart.irAngle*2;
   irClose = uart.irClose;
@@ -46,6 +46,7 @@ void loop() {
     Serial.print("IR Angle: ");Serial.println(irAngle);
     Serial.print("IR Close: ");Serial.println(irClose);
     Serial.print("Line Angle: ");Serial.println(lineAngle);
+    Serial.print("Avoid Line Angle: "); Serial.println(robot.lineLogic.getAvoidLineAngle(lineAngle));
   }
 
   movementAngle = robot.getMovementAngle(irAngle, irClose, lineAngle);

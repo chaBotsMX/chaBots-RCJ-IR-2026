@@ -26,17 +26,18 @@ class Robot {
         }
 
         int getMovementAngle(int irAngle, int irClose, int lineAngle){
-            if(lineLogic.lineDetected(lineAngle)) return lineLogic.getAvoidLineAngle(lineAngle);
+            if(lineLogic.getAvoidLineAngle(lineAngle) <= 360) return lineLogic.getAvoidLineAngle(lineAngle);
             if(irClose == 1) return ballLogic.adjustBallAngleClose(irAngle);
             if(irClose == 0) return irAngle;
             return 0;
         }
 
         int getPWM(int irAngle, int irClose, int lineAngle){
-            if(ballLogic.adjustBallAngleClose(irAngle) == irAngle) return 210;
-            if(irClose == 1) return 150;
-            if(irClose == 0) return 200;
-            if(lineLogic.lineDetected(lineAngle)) return 150;
+            if(lineLogic.lineDetected(lineAngle)) return 100;
+            if(!ballLogic.ballDetected(irAngle)) return 0;
+            if(ballLogic.adjustBallAngleClose(irAngle) == irAngle) return 160;
+            if(irClose == 1) return 100;
+            if(irClose == 0) return 150;
             return 0;
         }
 
