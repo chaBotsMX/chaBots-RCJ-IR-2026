@@ -1,11 +1,11 @@
-#ifndef LINE_H
-#define LINE_H
+#ifndef LINE_AVOIDING_H
+#define LINE_AVOIDING_H
 
 #include <Arduino.h>
 
-class LineLogic {
+class LineAvoiding {
     public:
-        LineLogic(){}
+        LineAvoiding(){}
         
         bool lineDetected(int lineAngle) {
             if(lineAngle <= 360) return true;

@@ -10,11 +10,8 @@ unsigned long long updateTimer = 0;
 int yawCorrection = 0;
 
 int irAngle = 500;
-int irDistance = 0;
+int irDistance = 254;
 int lineAngle = 500;
-
-int movementAngle = 0;
-int pwm = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -46,11 +43,9 @@ void loop() {
     Serial.print("IR Angle: ");Serial.println(irAngle);
     Serial.print("IR Distance: ");Serial.println(irDistance);
     Serial.print("Line Angle: ");Serial.println(lineAngle);
-    Serial.print("Avoid Line Angle: "); Serial.println(robot.lineLogic.getAvoidLineAngle(lineAngle));
   }
 
-  movementAngle = robot.getMovementAngle(irAngle, irDistance, lineAngle);
-  pwm = robot.getPWM(irAngle, irDistance, lineAngle);
+  robot.updateAttackerControl(irAngle, irDistance, lineAngle);
 
-  robot.drive.driveToAngle(movementAngle, pwm, yawCorrection);
+  robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 }

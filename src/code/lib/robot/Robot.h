@@ -6,8 +6,9 @@
 #include "kicker/Kicker.h"
 #include "imu/IMU.h"
 #include "pd-control/PD.h"
-#include "game-logic/BallLogic.h"
-#include "game-logic/LineLogic.h"
+#include "LineAvoiding.h"
+#include "attacker/AttackerControl.h"
+#include "goalkeeper/GoalkeeperControl.h"
 
 class Robot {
     public:
@@ -15,8 +16,13 @@ class Robot {
         Kicker kicker;
         IMU imu;
         PD pd;
-        BallLogic ballLogic;
-        LineLogic lineLogic;
+        LineAvoiding lineAvoiding;
+
+        AttackerControl attacker;
+        GoalkeeperControl goalkeeper;
+
+        MovementCommand atkCmd;
+        MovementCommand gkCmd;
     
         Robot() : pd(4, 0.1, 200) {
             if(lineNeoOn){
@@ -25,27 +31,20 @@ class Robot {
             }
         }
 
-        int getMovementAngle(int irAngle, bool irClose, int lineAngle){
-            if(lineLogic.getAvoidLineAngle(lineAngle) <= 360) return lineLogic.getAvoidLineAngle(lineAngle);
-            if(irClose) return ballLogic.adjustBallAngleClose(irAngle);
-            if(!irClose) return irAngle;
-            return 0;
-        }
-
-        int getPWM(int irAngle, int irDistance, int lineAngle){
-            if(lineLogic.lineDetected(lineAngle)) return 100; //line detected
-            if(ballLogic.adjustBallAngleClose(irAngle) == irAngle) return 160; // ball in front
-            if(ballLogic.distanceClose(irDistance)) return 80 + irDistance * 0.2; // ball close but not in front
-            if(ballLogic.ballDetected(irAngle)) return 150; // ball detected
-            return 0;
-        }
-
         float getLogicLipoVoltage(){
             return analogRead(logicLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
 
         float getPowerLipoVoltage(){
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
+        }
+        
+        void updateAttackerControl(int irAngle, int irDistance, int lineAngle){
+            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance);
+        }
+
+        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle){
+            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance);
         }
         
     private:

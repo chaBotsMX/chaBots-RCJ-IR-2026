@@ -177,3 +177,11 @@ void IRSensor::printIR(unsigned long timeLimit){
     Serial.print("distance: "); Serial.print(getDistance()); Serial.print('\n');
   }
 }
+
+float IRSensor::getBallVectorX(){
+  return ballVectorX;
+}
+
+float IRSensor::getBallVectorY(){
+  return ballVectorY;
+}
