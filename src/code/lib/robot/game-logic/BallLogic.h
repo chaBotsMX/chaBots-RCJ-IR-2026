@@ -12,6 +12,11 @@ class BallLogic {
             return false;
         }
 
+        bool distanceClose(int irDistance){
+            if(irDistance < 200) return true;
+            return false;
+        }
+
         int adjustBallAngleClose(int irAngle){
             if(irAngle > 360 || irAngle < 0){
                 return 500;  // Invalid angle

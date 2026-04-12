@@ -5,10 +5,10 @@
 IRSensor ir;
 UART uart(Serial7, IRBoard{});
 
-#define IR_UPDATE_TIME 600
+#define IR_UPDATE_TIME 2500
 
 int angle = 0;
-int isBallClose = 0;
+int distance = 0;
 
 unsigned long timer = 0;
 
@@ -27,8 +27,8 @@ void loop() {
   if(millis() > timer){
     timer = millis() + 4;
     angle = ir.getAngle();
-    isBallClose = ir.isBallClose();
+    distance = ir.getDistance();
 
-    uart.sendIR(angle/2, isBallClose);
+    uart.sendIR(angle/2, distance);
   }
 }

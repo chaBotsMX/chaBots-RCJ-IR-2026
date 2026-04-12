@@ -16,12 +16,15 @@ IRSensor::IRSensor(){
  
   for(int i = 0; i < numSensors; i++){
     tsspTimesDetected[i] = 0;
-    consecutiveDetections[i] = 0;
-    photodiodeReadings[i] = 1023;
+    photodiodeReadings[i] = 0;
   }
 
   analogReadResolution(12);
   analogReadAveraging(1);
+
+  for(int i = 0; i < numSensors; i++){
+    photodiodeGains[i] = referenceReadings[0] / referenceReadings[i];
+  }
 }
 
 void IRSensor::update(unsigned long timeLimit){
@@ -30,19 +33,13 @@ void IRSensor::update(unsigned long timeLimit){
   if((micros() - lastUpdate) >= timeLimit){
     lastUpdate = micros();
     
-    updateTSSP();
+    updateSensors();
     calculateBallVector();
-  }
-
-  // Update photodiodes at SLOWER rate (not every loop!)
-  static unsigned long lastPhotoUpdate = 0;
-  if((millis() - lastPhotoUpdate) >= 5){  // Only every 10ms
-    lastPhotoUpdate = millis();
-    updatePhotodiodes();
   }
 }
 
-void IRSensor::updateTSSP(){  
+void IRSensor::updateSensors(){
+  bool anyDetected = false;
   for(int i = 0; i < numSensors; i++){
     bool currentDetection = !digitalReadFast(tssp[i]);
     tsspDetected[i][bufferIndex] = currentDetection;
@@ -59,12 +56,20 @@ void IRSensor::updateTSSP(){
 
     tsspTimesDetected[i] = counter;
     if(tsspTimesDetected[i] < 10) tsspTimesDetected[i] = 0; //clean noise
+    else anyDetected = true;
+  }
+
+  if(anyDetected) updatePhotodiodes(); //update photodiodes immediately if any tssp detects something
+  else{
+    for(int i = 0; i < numSensors; i++){
+      photodiodeReadings[i] = 0; //if no tssp detects anything, reset photodiodes to 0 to avoid noise
+    }
   }
 }
 
 void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numSensors; i++){
-    int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 4070); //invert and cap to 0-4095
+    int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 2000); //invert and cap to 0-2000
     photodiodeReadings[i] = currentDetection;
   }
 }
@@ -86,13 +91,14 @@ bool IRSensor::arePhotodiodesDetecting(){
 }
 
 bool IRSensor::isBallClose(){
-  if(magnitude > 400) return true;
+  if(getDistance() < 200) return true;
   return false;
 }
 
 void IRSensor::calculateBallVector(){
   float sumX = 0, sumY = 0;
   int sensorsReading = 0;
+  int peakReading = 0;
 
   if(arePhotodiodesDetecting()){
     for(int i = 0; i < numSensors; i++){
@@ -100,6 +106,7 @@ void IRSensor::calculateBallVector(){
         sumX += photodiodeReadings[i] * vectorX[i];
         sumY += photodiodeReadings[i] * vectorY[i];
         sensorsReading++;
+        if(photodiodeReadings[i] > peakReading) peakReading = photodiodeReadings[i];
       }
     }
   }else{
@@ -122,7 +129,7 @@ void IRSensor::calculateBallVector(){
     }
   }
   
-  if(sensorsReading == 0){ rawAngle = 500; smoothAngle = 500; magnitude = -1;}
+  if(sensorsReading == 0){ rawAngle = 500; smoothAngle = 500; intensity = 5000;}
   else{
     double theta = degrees(atan2(sumY, sumX));
     if (theta < 0) theta+=360;
@@ -138,7 +145,7 @@ void IRSensor::calculateBallVector(){
     smoothAngle = (int)smoothTheta;
 
     if(arePhotodiodesDetecting()){
-      magnitude = sqrt((filteredX * filteredX) + (filteredY * filteredY));
+      intensity = peakReading; //sqrt((filteredX * filteredX) + (filteredY * filteredY));
     }
   }
 }
@@ -148,7 +155,8 @@ int IRSensor::getAngle(){
 }
 
 int IRSensor::getDistance(){
-  return magnitude;
+  if(intensity <= 2000 && arePhotodiodesDetecting()) return map(2000 - intensity, 0, 2000, 0, 253);
+  return 254;
 }
 
 void IRSensor::printIR(unsigned long timeLimit){
@@ -163,8 +171,9 @@ void IRSensor::printIR(unsigned long timeLimit){
     }
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
-    Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print('\t');
-    Serial.print("isBallClose: "); Serial.print(isBallClose()); Serial.print('\t');
-    Serial.print("magnitude: "); Serial.print(magnitude); Serial.print('\n');
+    Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print(' ');
+    Serial.print("isBallClose: "); Serial.print(isBallClose()); Serial.print(' ');
+    Serial.print("arePhotodiodesDetecting: "); Serial.print(arePhotodiodesDetecting()); Serial.print(' ');
+    Serial.print("distance: "); Serial.print(getDistance()); Serial.print('\n');
   }
 }

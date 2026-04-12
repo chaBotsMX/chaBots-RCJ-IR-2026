@@ -10,7 +10,7 @@ unsigned long long updateTimer = 0;
 int yawCorrection = 0;
 
 int irAngle = 500;
-int irClose = 0;
+int irDistance = 0;
 int lineAngle = 500;
 
 int movementAngle = 0;
@@ -32,10 +32,10 @@ void setup() {
 
 void loop() {
   uart.receive();
-  //robot.kicker.update();
+  robot.kicker.update();
 
   irAngle = uart.irAngle*2;
-  irClose = uart.irClose;
+  irDistance = uart.irDistance;
   lineAngle = uart.lineAngle*2;
 
   if(millis() - updateTimer >= 10){
@@ -44,13 +44,13 @@ void loop() {
     if(robot.imu.update()) yawCorrection = robot.pd.getCorrection(robot.imu.getYaw());
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
-    Serial.print("IR Close: ");Serial.println(irClose);
+    Serial.print("IR Distance: ");Serial.println(irDistance);
     Serial.print("Line Angle: ");Serial.println(lineAngle);
     Serial.print("Avoid Line Angle: "); Serial.println(robot.lineLogic.getAvoidLineAngle(lineAngle));
   }
 
-  movementAngle = robot.getMovementAngle(irAngle, irClose, lineAngle);
-  pwm = robot.getPWM(irAngle, irClose, lineAngle);
+  movementAngle = robot.getMovementAngle(irAngle, irDistance, lineAngle);
+  pwm = robot.getPWM(irAngle, irDistance, lineAngle);
 
   robot.drive.driveToAngle(movementAngle, pwm, yawCorrection);
 }
