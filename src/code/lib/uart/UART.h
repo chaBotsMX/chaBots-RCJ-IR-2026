@@ -18,7 +18,7 @@ struct LineBoard {};
 class UART {
   public:
     int irAngle = 500;
-    int irClose = 0;
+    int irDistance = 254;
     int lineAngle = 500;
 
     DataReceiver irReceiver   = DataReceiver(2); //angle and distance
@@ -46,7 +46,7 @@ class UART {
         irReceiver.feed(_irSerial->read());
         if (irReceiver.ready) {
           irAngle = irReceiver.data[0];
-          irClose = irReceiver.data[1];
+          irDistance = irReceiver.data[1];
         }
       }
 

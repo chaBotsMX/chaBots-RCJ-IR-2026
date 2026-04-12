@@ -25,19 +25,18 @@ class Robot {
             }
         }
 
-        int getMovementAngle(int irAngle, int irClose, int lineAngle){
+        int getMovementAngle(int irAngle, bool irClose, int lineAngle){
             if(lineLogic.getAvoidLineAngle(lineAngle) <= 360) return lineLogic.getAvoidLineAngle(lineAngle);
-            if(irClose == 1) return ballLogic.adjustBallAngleClose(irAngle);
-            if(irClose == 0) return irAngle;
+            if(irClose) return ballLogic.adjustBallAngleClose(irAngle);
+            if(!irClose) return irAngle;
             return 0;
         }
 
-        int getPWM(int irAngle, int irClose, int lineAngle){
-            if(lineLogic.lineDetected(lineAngle)) return 100;
-            if(!ballLogic.ballDetected(irAngle)) return 0;
-            if(ballLogic.adjustBallAngleClose(irAngle) == irAngle) return 160;
-            if(irClose == 1) return 100;
-            if(irClose == 0) return 150;
+        int getPWM(int irAngle, int irDistance, int lineAngle){
+            if(lineLogic.lineDetected(lineAngle)) return 100; //line detected
+            if(ballLogic.adjustBallAngleClose(irAngle) == irAngle) return 160; // ball in front
+            if(ballLogic.distanceClose(irDistance)) return 80 + irDistance * 0.2; // ball close but not in front
+            if(ballLogic.ballDetected(irAngle)) return 150; // ball detected
             return 0;
         }
 

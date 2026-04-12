@@ -69,22 +69,41 @@ class IRSensor {
       0.9238795325    // Index 15: sin(-247.5°)
     };
 
+    const float referenceReadings[numSensors] = {
+      1093, // sensor 0 
+      1192,    // sensor 1
+      1020,    // sensor 2
+      1038,   // sensor 3
+      1075,  // sensor 4 
+      1600,  // sensor 5
+      1406,    // sensor 6
+      934,  // sensor 7
+      1075, // sensor 8
+      675,  // sensor 9
+      865,    // sensor 10
+      1758,  // sensor 11
+      1500, // sensor 12
+      1211,  // sensor 13
+      1506,    // sensor 14
+      1360   // sensor 15
+    };
+
     //variables and locals
     int rawAngle = 500;
-    int magnitude = -1;
+    int intensity = 5000;
 
     bool tsspDetected[numSensors][bufferSize]; //matrix with tssp states over time
     int photodiodeReadings[numSensors];
     int bufferIndex = 0;
     int tsspTimesDetected[numSensors];
-    int consecutiveDetections[numSensors];
+    float photodiodeGains[numSensors];
 
     float filteredX = 0;
     float filteredY = 0;
     float filterAlpha = 0.1; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
     
-    void updateTSSP();
+    void updateSensors();
     void updatePhotodiodes();
     void calculateBallVector();
 };
