@@ -18,39 +18,30 @@ GoalkeeperController::GoalkeeperController() {
   smoothed_result_y = 0;
 }
 
-MovementCommand GoalkeeperController::calculateMovement( // calc belongs to Goalkeeper box and returns a movement command function
-  float line_x, float line_y,
-  float ball_x, float ball_y,
-  int yaw_correction
-) {
+MovementCommand GoalkeeperController::calculateMovement(int lineAngle, int irAngle, int irDistance) {
   MovementCommand cmd;
-  cmd.rotation = yaw_correction;
   
   // If no line detected, hold position (small movement to stay centered)
-  if (magnitude(line_x, line_y) < 0.1) {
+  if (line_logic.lineDetected(lineAngle)) {
     cmd.angle = 0;
     cmd.power = 0;
     return cmd;
   }
   
-  //Get line angle and normalize
-  float line_angle = atan2(line_y, line_x);  // In radians
+  // Convert angles to radians for vector math
+  float line_angle_rad = radians(lineAngle);
   
-  // Determine which side of the line the ball is on
-  // We need to check if ball is in the forward-facing semicircle
-  float ball_angle = atan2(ball_y, ball_x);  // In radians
-  float ball_magnitude = magnitude(ball_x, ball_y);
-  
+  // Convert line to unit vector
+  float line_x = cos(line_angle_rad);
+  float line_y = sin(line_angle_rad);
+
   // Calculate the perpendicular (parallel to line) vector
   // The perpendicular points either left or right of the line
-  int ball_side = determineBallSide(line_angle, ball_angle);
+  int ball_side = determineBallSide(lineAngle, irAngle);
   
   // Calculate the direction perpendicular to the line
-  float parallel_angle = line_angle + (M_PI / 2.0);
-  if (ball_side == 1) {
-    parallel_angle = line_angle - (M_PI / 2.0);
-  }
-  
+  float parallel_angle = line_angle_rad + (M_PI / 2.0) ? ball_side == -1 : line_angle_rad - (M_PI / 2.0);
+
   float parallel_x = cos(parallel_angle);
   float parallel_y = sin(parallel_angle);
   
@@ -67,50 +58,52 @@ MovementCommand GoalkeeperController::calculateMovement( // calc belongs to Goal
   smoothed_result_y = (result_y * smoothing_alpha) + (smoothed_result_y * (1.0 - smoothing_alpha));
   
   // Convert to angle and magnitude
-  float result_angle = atan2(smoothed_result_y, smoothed_result_x); //exact angle of movement vector
+  float result_angle = degrees(atan2(smoothed_result_y, smoothed_result_x)); //exact angle of movement vector
   float result_magnitude = magnitude(smoothed_result_x, smoothed_result_y); //magnitud of movement vector
   
-  // Apply power scaling
-  // If ball is close enough, use full power; otherwise scale back
-  int scaled_power = (int)(result_magnitude * power_limit); //its an intager because power is an intager, and we need to convert from float to int
+  if (result_angle < 0) result_angle += 360;
   
-  if (ball_magnitude < min_ball_magnitude) {
-    scaled_power = (int)(scaled_power * 0.7);  // Reduce power if ball far away
+  // Calculate power based on result magnitude
+  int scaled_power = (int)(result_magnitude * power_limit);
+  
+  // Reduce power if ball is far away (conservative positioning)
+  if (irDistance > ball_far_threshold) {
+    scaled_power = (int)(scaled_power * 0.6);
   }
   
-  scaled_power = constrain(scaled_power, 0, power_limit); //if power is above limit, set to limit. if below 0, set to 0
+  // Constrain power
+  scaled_power = constrain(scaled_power, 0, power_limit);
   
-  // Convert angle from radians (-PI to PI) to degrees (0-360) to invalidate negative angles
-  cmd.angle = (int)degrees(result_angle);
-  if (cmd.angle < 0) cmd.angle += 360;
-  
+  // Build command
+  cmd.angle = result_angle;
   cmd.power = scaled_power;
   
   return cmd;
 }
 
-int GoalkeeperController::determineBallSide(float line_angle, float ball_angle) {
-  // Normalize angles to -PI to PI
-  float normalized_line = normalizeAngle(line_angle);
-  float normalized_ball = normalizeAngle(ball_angle);
+int GoalkeeperController::determineBallSide(int lineAngle, int ballAngle) {
+  // Calculate shortest angular difference
+  int diff = angleDifference(ballAngle, lineAngle);
   
-  // Calculate the angular difference
-  float diff = normalized_ball - normalized_line;
-  diff = normalizeAngle(diff);
-  
-  // If diff is positive, ball is on the "left" side (go_flag = 0)
-  // If diff is negative, ball is on the "right" side (go_flag = 1)
-  if (diff > 0 && diff < M_PI) {
-    return 0;  // Left
+  // If difference is positive (ball angle > line angle going CW),
+  // ball is on the left side
+  // If negative, ball is on the right side
+  if (diff > 0 && diff <= 180) {
+    return -1;  // Left side
   } else {
-    return 1;  // Right
+    return 1;   // Right side
   }
 }
 
-float GoalkeeperController::normalizeAngle(float angle) {
-  while (angle > M_PI) angle -= 2 * M_PI;
-  while (angle < -M_PI) angle += 2 * M_PI;
-  return angle;
+int GoalkeeperController::angleDifference(int angle1, int angle2) {
+  // Calculate shortest angular distance from angle2 to angle1
+  int diff = angle1 - angle2;
+  
+  // Normalize to -180 to +180
+  while (diff > 180) diff -= 360;
+  while (diff < -180) diff += 360;
+  
+  return diff;
 }
 
 float GoalkeeperController::magnitude(float x, float y) {

@@ -20,11 +20,11 @@
 
 #include <Arduino.h>
 #include <math.h>
+#include "game-logic/LineLogic.h"
 
 struct MovementCommand {
-  float angle;        // 0-360 degrees
+  int angle;        // 0-360 degrees
   int power;          // 0-250
-  int rotation;       // -250 to 250 (yaw correction)
 };
 
 class GoalkeeperController {
@@ -33,34 +33,31 @@ class GoalkeeperController {
     
     /**
      * Calculate movement command based on line and ball vectors
-     * @param line_x: X component of line vector
-     * @param line_y: Y component of line vector
-     * @param ball_x: X component of ball vector
-     * @param ball_y: Y component of ball vector
-     * @param yaw_correction: Correction from IMU yaw error (0 if not usied)
+     * @param lineAngle: Angle of the line vector
+     * @param irAngle: Angle of the IR sensor reading
+     * @param irDistance: Distance from IR sensor
      * @return MovementCommand with angle and power
      */
     MovementCommand calculateMovement( //recieves params, returns movement command function
-      float line_x, float line_y,
-      float ball_x, float ball_y,
-      int yaw_correction = 0 //tunable
+      int lineAngle,
+      int irAngle, int irDistance
     );
+
+    LineLogic line_logic; // Instance of LineLogic for line processing
     
     // Tuning parameters
     void setLineCoefficient(float k) { k_line = k; }
-    void setMinBallMagnitude(float mag) { min_ball_magnitude = mag; }
     void setPowerLimit(int limit) { power_limit = limit; }
     void setSmoothing(float alpha) { smoothing_alpha = alpha; }
     
     float getLineCoefficient() { return k_line; }
-    float getMinBallMagnitude() { return min_ball_magnitude; }
     
   private:
     // Tuning coefficients
     float k_line = 1.0;                    // How strongly to follow the line
-    float min_ball_magnitude = 0.5;        // Minimum ball detection to pursue
-    int power_limit = 160;                 // Max power to motors dont remember how much was it haha
+    int power_limit = 160;                 // Max power to motors
     float smoothing_alpha = 0.15;          // Exponential smoothing factor
+    int ball_far_threshold = 254;          // Distance above which ball is "far"
     
     // State for exponential smoothing
     float smoothed_result_x = 0;
@@ -70,18 +67,12 @@ class GoalkeeperController {
      * Determine which side of the line the ball is on
      * @param line_angle: Angle of the line vector (radians)
      * @param ball_angle: Angle of the ball vector (radians)
-     * @return 0 for left side, 1 for right side
+     * @return -1 for left side, 1 for right side
      */
-    int determineBallSide(float line_angle, float ball_angle);
+    int determineBallSide(int lineAngle, int ballAngle);
     
-    /**
-     * Normalize angle to -PI to PI range
-     */
-    float normalizeAngle(float angle);
-    
-    /**
-     * Calculate magnitude of a 2D vector
-     */
+    int angleDifference(int angle1, int angle2);
+
     float magnitude(float x, float y);
 };
 
