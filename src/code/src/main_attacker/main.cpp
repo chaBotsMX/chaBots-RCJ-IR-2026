@@ -29,7 +29,7 @@ void setup() {
 
 void loop() {
   uart.receive();
-  //robot.kicker.update();
+  robot.kicker.update();
 
   irAngle = uart.irAngle*2;
   irDistance = uart.irDistance;
