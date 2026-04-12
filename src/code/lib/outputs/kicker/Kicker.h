@@ -13,18 +13,18 @@
 
 class Kicker {
   private:
-    const int solenoid = 32;
+    const int kicker = 31;
     unsigned long intervalTimer = 0;
     unsigned long kickingTimer = 0;
     bool isActive = false;
   public:
     Kicker(){
-      pinMode(solenoid, OUTPUT);
+      pinMode(kicker, OUTPUT);
     };
 
     void kick(){
-      if(!isActive && millis() - intervalTimer >= 3000){
-        digitalWrite(solenoid, HIGH);
+      if(!isActive && millis() - intervalTimer >= 2000){
+        digitalWrite(kicker, HIGH);
         intervalTimer = millis();
         kickingTimer = millis();
         isActive = true;
@@ -33,7 +33,7 @@ class Kicker {
 
     void update(){
       if(isActive && (millis() - kickingTimer >= 10)){
-        digitalWrite(solenoid, LOW);
+        digitalWrite(kicker, LOW);
         isActive = false;
       }
     }

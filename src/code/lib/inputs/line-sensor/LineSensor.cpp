@@ -8,17 +8,24 @@
 
 #include "LineSensor.h"
 
-LineSensor::LineSensor()
-  : pixels(numSensors, neoPin, NEO_GRB + NEO_KHZ800){
+LineSensor::LineSensor() : pixels(numSensors, neoPin, NEO_RGB + NEO_KHZ800){
+  for (int i = 0; i < numSensors; i++) {
+    pinMode(comparators[i], INPUT);
+  }
 }
 
 void LineSensor::begin(){
+  analogWrite(vref[0], 200);
+  analogWrite(vref[1], 200);
+  analogWrite(vref[2], 200);
+  analogWrite(vref[3], 200);
+
   pixels.begin();
   pixels.clear();
 
   for(int i = 0; i < numSensors; i++){
     unsigned long start = millis();
-    while(millis() - start < 30){}
+    while(millis() - start < 20){}
     pixels.setPixelColor(i, pixels.Color(250, 0, 0));
     pixels.show();
   }
@@ -31,13 +38,6 @@ void LineSensor::update(){
   calculateLineVector();
 }
 
-bool LineSensor::isLineDetected(){
-  for(int i = 0; i < numSensors; i++){
-    if(readings[i]) return true;
-  }
-  return false;
-}
-
 void LineSensor::calculateLineVector(){
   double tempSumX = 0;
   double tempSumY = 0;
@@ -45,8 +45,8 @@ void LineSensor::calculateLineVector(){
 
   for(int i = 0; i < numSensors; i++){
     if(readings[i]){
-      tempSumX += vectorX[i];
-      tempSumY += vectorY[i];
+      sumX += vectorX[i];
+      sumY += vectorY[i];
       sensorsReading++;
     }
   }
@@ -71,10 +71,10 @@ void LineSensor::printLS(unsigned long timeLimit){
     lastUpdate = millis();
 
     for(int i = 0; i< numSensors; i++){
-      Serial.print(readings[i]); Serial.print('\t');
+      Serial.print(readings[i]); Serial.print(' ');
     }
 
-    Serial.println();
+    Serial.println(angle);
   }
 }
 
