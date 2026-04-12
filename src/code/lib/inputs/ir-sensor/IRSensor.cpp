@@ -168,3 +168,11 @@ void IRSensor::printIR(unsigned long timeLimit){
     Serial.print("magnitude: "); Serial.print(magnitude); Serial.print('\n');
   }
 }
+
+float IRSensor::getBallVectorX(){
+  return ballVectorX;
+}
+
+float IRSensor::getBallVectorY(){
+  return ballVectorY;
+}
