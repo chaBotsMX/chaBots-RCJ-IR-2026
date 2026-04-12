@@ -4,64 +4,55 @@
  * @author LeoMc. / chaBotsMX
  * @date 10/02/26
  */
-#include <Arduino.h>
-#include "drive/Drive.h"
-#include "imu/IMU.h"
-#include "UART.h"
-#include "pd-control/PD.h"
-#include "goalkeeper/GoalkeeperController.h"
 
-Drive drive; //motors
-IMU imu; //orientation sensor
-UART uart(Serial8, Serial5); // Serial8 for IMU, Serial5 for sensor board UART derial to serial
-PD pd(1.85, 0.1, 160); // Proportional gain tuned for strong response to yaw error, with some integral to reduce steady-state error. Power limit set to prevent oscillation at high speeds.
-GoalkeeperController goalkeeper;
+#include <Arduino.h>
+#include "Robot.h"
+#include "UART.h"
+
+Robot robot;
+UART uart (Serial8, Serial5);
 
 unsigned long long updateTimer = 0;
+
 int yawCorrection = 0;
+
+int irAngle = 500;
+int irDistance = 254;
+int lineAngle = 500;
 
 void setup() {
   Serial.begin(115200);
+  uart.begin(2000000);
+  
+  Serial.print("Logic Lipo Voltage: "); Serial.println(robot.getLogicLipoVoltage());
+  Serial.print("Power Lipo Voltage: "); Serial.println(robot.getPowerLipoVoltage());
+
   delay(1000);
 
-  if (!imu.begin(Serial8)) {
+  if (!robot.imu.begin(Serial7)) {
     Serial.println("imu not found");
   }
-  
-  // Configure goalkeeper tuning parameters
-  goalkeeper.setLineCoefficient(1.2);      // How strongly to follow line
-  goalkeeper.setMinBallMagnitude(2.0);     // Minimum ball signal to pursue
-  goalkeeper.setPowerLimit(160);           // Max motor power
-  goalkeeper.setSmoothing(0.15);           // Smoothing factor
 }
 
 void loop() {
   uart.receive();
+  //robot.kicker.update();
+
+  irAngle = uart.irAngle*2;
+  irDistance = uart.irDistance;
+  lineAngle = uart.lineAngle*2;
 
   if(millis() - updateTimer >= 10){
     updateTimer = millis();
-    if(imu.update()) yawCorrection = pd.getCorrection(imu.getYaw());
+    
+    if(robot.imu.update()) yawCorrection = robot.pd.getCorrection(robot.imu.getYaw());
+    
+    Serial.print("IR Angle: ");Serial.println(irAngle);
+    Serial.print("IR Distance: ");Serial.println(irDistance);
+    Serial.print("Line Angle: ");Serial.println(lineAngle);
   }
 
-  // Convert received angles (0-360) to vectors
-  // This is a temporary solution using angles from UART
-  // TODO: Update sensor boards to send raw vectors via UART instead of angles
-  
-  float line_angle_rad = radians(uart.lineAngle);
-  float line_x = cos(line_angle_rad);
-  float line_y = sin(line_angle_rad);
-  
-  float ball_angle_rad = radians(uart.irAngle);
-  float ball_magnitude = (uart.irDistance / 100.0) * 5.0;  // Scale distance to vector magnitude
-  float ball_x = ball_magnitude * cos(ball_angle_rad);
-  float ball_y = ball_magnitude * sin(ball_angle_rad);
-  
-  // Calculate movement using vector-based goalkeeper logic
-  MovementCommand cmd = goalkeeper.calculateMovement(
-    line_x, line_y,
-    ball_x, ball_y,
-    yawCorrection
-  );
-  
-  drive.driveToAngle(cmd.angle, cmd.power, cmd.rotation);
+  robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle);
+
+  robot.drive.driveToAngle(robot.gkCmd.angle, robot.gkCmd.power, yawCorrection);
 }

@@ -1,5 +1,5 @@
 /**
- * @file GoalkeeperController.cpp
+ * @file GoalkeeperControl.cpp
  * @brief Implementation of vector-based goalkeeper control
  * 
  * Based on the Shiokara/Edge RoboCup algorithm:
@@ -11,18 +11,18 @@
  * @date 2026-03-30
  */
 
-#include "GoalkeeperController.h"
+#include "GoalkeeperControl.h"
 
-GoalkeeperController::GoalkeeperController() {
+GoalkeeperControl::GoalkeeperControl() {
   smoothed_result_x = 0;
   smoothed_result_y = 0;
 }
 
-MovementCommand GoalkeeperController::calculateMovement(int lineAngle, int irAngle, int irDistance) {
+MovementCommand GoalkeeperControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
   MovementCommand cmd;
   
   // If no line detected, hold position (small movement to stay centered)
-  if (line_logic.lineDetected(lineAngle)) {
+  if (lineAngle > 360) {
     cmd.angle = 0;
     cmd.power = 0;
     return cmd;
@@ -81,7 +81,7 @@ MovementCommand GoalkeeperController::calculateMovement(int lineAngle, int irAng
   return cmd;
 }
 
-int GoalkeeperController::determineBallSide(int lineAngle, int ballAngle) {
+int GoalkeeperControl::determineBallSide(int lineAngle, int ballAngle) {
   // Calculate shortest angular difference
   int diff = angleDifference(ballAngle, lineAngle);
   
@@ -95,7 +95,7 @@ int GoalkeeperController::determineBallSide(int lineAngle, int ballAngle) {
   }
 }
 
-int GoalkeeperController::angleDifference(int angle1, int angle2) {
+int GoalkeeperControl::angleDifference(int angle1, int angle2) {
   // Calculate shortest angular distance from angle2 to angle1
   int diff = angle1 - angle2;
   
@@ -106,6 +106,6 @@ int GoalkeeperController::angleDifference(int angle1, int angle2) {
   return diff;
 }
 
-float GoalkeeperController::magnitude(float x, float y) {
+float GoalkeeperControl::magnitude(float x, float y) {
   return sqrt((x * x) + (y * y));
 }

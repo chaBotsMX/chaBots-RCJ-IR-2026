@@ -1,5 +1,5 @@
 /**
- * @file GoalkeeperController.h
+ * @file GoalkeeperControl.h
  * @brief Vector-based goalkeeper control logic inspired by Edge RoboCup team
  * 
  * Implements the Shiokara vector sum algorithm:
@@ -15,21 +15,20 @@
  * @date 2026-03-30
  */
 
-#ifndef GOALKEEPER_CONTROLLER_H //protect form other reads
-#define GOALKEEPER_CONTROLLER_H // define if not 
+#ifndef GOALKEEPER_CONTROL_H //protect form other reads
+#define GOALKEEPER_CONTROL_H // define if not 
 
 #include <Arduino.h>
 #include <math.h>
-#include "game-logic/LineLogic.h"
 
 struct MovementCommand {
   int angle;        // 0-360 degrees
   int power;          // 0-250
 };
 
-class GoalkeeperController {
+class GoalkeeperControl {
   public:
-    GoalkeeperController();
+    GoalkeeperControl();
     
     /**
      * Calculate movement command based on line and ball vectors
@@ -42,8 +41,6 @@ class GoalkeeperController {
       int lineAngle,
       int irAngle, int irDistance
     );
-
-    LineLogic line_logic; // Instance of LineLogic for line processing
     
     // Tuning parameters
     void setLineCoefficient(float k) { k_line = k; }
