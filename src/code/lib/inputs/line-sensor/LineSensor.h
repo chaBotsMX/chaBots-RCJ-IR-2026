@@ -20,9 +20,6 @@ class LineSensor {
     void update();
     void printLS(unsigned long timeLimit);
     int getAngle();
-    bool isLineDetected();
-    float getLineVectorX();
-    float getLineVectorY();
 
   private:
     const int neoPin = 10;

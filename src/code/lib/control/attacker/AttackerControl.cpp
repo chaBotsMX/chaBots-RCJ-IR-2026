@@ -10,8 +10,8 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommand AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
-    MovementCommand cmd;
+MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
+    MovementCommandAtk cmd;
   
     if(line.getAvoidLineAngle(lineAngle) <= 360) cmd.angle = line.getAvoidLineAngle(lineAngle);
     else if(isBallClose(irDistance)) cmd.angle = adjustBallAngleClose(irAngle);
@@ -26,12 +26,12 @@ MovementCommand AttackerControl::calculateMovement(int lineAngle, int irAngle, i
     return cmd;
 }
 
-bool ballDetected(int irAngle) {
+bool AttackerControl::ballDetected(int irAngle) {
     if(irAngle <= 360) return true;
-        return false;
-    }
+    return false;
+}
 
-int adjustBallAngleClose(int irAngle){
+int AttackerControl::adjustBallAngleClose(int irAngle){
     if(irAngle > 360 || irAngle < 0){
         return 500;  // Invalid angle
     }
@@ -56,7 +56,7 @@ int adjustBallAngleClose(int irAngle){
     }
 }
 
-bool isBallClose(int irDistance){
+bool AttackerControl::isBallClose(int irDistance){
     if(irDistance < 200) return true;
     return false;
 }

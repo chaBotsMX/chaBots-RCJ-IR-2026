@@ -21,7 +21,7 @@
 #include <Arduino.h>
 #include <math.h>
 
-struct MovementCommand {
+struct MovementCommandGk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
 };
@@ -37,7 +37,7 @@ class GoalkeeperControl {
      * @param irDistance: Distance from IR sensor
      * @return MovementCommand with angle and power
      */
-    MovementCommand calculateMovement( //recieves params, returns movement command function
+    MovementCommandGk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
       int irAngle, int irDistance
     );

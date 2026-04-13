@@ -21,8 +21,8 @@ class Robot {
         AttackerControl attacker;
         GoalkeeperControl goalkeeper;
 
-        MovementCommand atkCmd;
-        MovementCommand gkCmd;
+        MovementCommandAtk atkCmd;
+        MovementCommandGk gkCmd;
     
         Robot() : pd(4, 0.1, 200) {
             if(lineNeoOn){
