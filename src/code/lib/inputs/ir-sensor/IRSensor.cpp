@@ -166,8 +166,8 @@ void IRSensor::printIR(unsigned long timeLimit){
     lastUpdate = millis();
 
     for(int j = 0; j < 16; j++){
-      //Serial.print(tsspTimesDetected[j]); Serial.print('\t');
-      Serial.print(photodiodeReadings[j]); Serial.print(' ');
+      Serial.print(tsspTimesDetected[j]); Serial.print(' ');
+      //Serial.print(photodiodeReadings[j]); Serial.print(' ');
     }
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
@@ -176,12 +176,4 @@ void IRSensor::printIR(unsigned long timeLimit){
     Serial.print("arePhotodiodesDetecting: "); Serial.print(arePhotodiodesDetecting()); Serial.print(' ');
     Serial.print("distance: "); Serial.print(getDistance()); Serial.print('\n');
   }
-}
-
-float IRSensor::getBallVectorX(){
-  return ballVectorX;
-}
-
-float IRSensor::getBallVectorY(){
-  return ballVectorY;
 }

@@ -46,6 +46,28 @@ class Robot {
         void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle){
             gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance);
         }
+
+        bool hasBall(int irAngle, int irDistance){
+            static unsigned long ballSeenSince = 0;
+            static bool tracking = false;
+
+            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 100); // Ball in front and close
+
+            if (currentBallState) {
+                if (!tracking) {
+                    ballSeenSince = millis();
+                    tracking = true;
+                }
+                if (millis() - ballSeenSince >= 80) {
+                    return true;
+                }
+            } else {
+                tracking = false;
+                ballSeenSince = 0;
+            }
+
+            return false;
+        }
         
     private:
         bool lineNeoOn = true;

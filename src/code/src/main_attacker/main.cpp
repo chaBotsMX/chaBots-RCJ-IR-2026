@@ -48,4 +48,8 @@ void loop() {
   robot.updateAttackerControl(irAngle, irDistance, lineAngle);
 
   robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
+
+  if(robot.hasBall(irAngle, irDistance)){
+    robot.kicker.kick();
+  }
 }

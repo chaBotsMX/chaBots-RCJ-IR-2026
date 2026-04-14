@@ -39,6 +39,8 @@ class AttackerControl {
     bool ballDetected(int irAngle);
     int adjustBallAngleClose(int irAngle);
     bool isBallClose(int irDistance);
+    bool isBallOnFront(int irAngle);
+    int calculateOrbitPower(int irAngle, int irDistance);
 };
 
 #endif

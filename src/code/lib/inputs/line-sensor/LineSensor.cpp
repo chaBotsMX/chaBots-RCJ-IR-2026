@@ -16,9 +16,9 @@ LineSensor::LineSensor() : pixels(numSensors, neoPin, NEO_RGB + NEO_KHZ800){
 
 void LineSensor::begin(){
   analogWrite(vref[0], 220);
-  analogWrite(vref[1], 220);
-  analogWrite(vref[2], 220);
-  analogWrite(vref[3], 220);
+  analogWrite(vref[1], 200);
+  analogWrite(vref[2], 200);
+  analogWrite(vref[3], 200);
 
   pixels.begin();
   pixels.clear();
