@@ -47,9 +47,9 @@ void loop() {
     
     if(robot.imu.update()) yawCorrection = robot.pd.getCorrection(robot.imu.getYaw());
     
-    Serial.print("IR Angle: ");Serial.println(irAngle);
-    Serial.print("IR Distance: ");Serial.println(irDistance);
-    Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("IR Angle: ");Serial.println(irAngle);
+    //Serial.print("IR Distance: ");Serial.println(irDistance);
+    //Serial.print("Line Angle: ");Serial.println(lineAngle);
   }
 
   robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle);

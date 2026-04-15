@@ -32,7 +32,7 @@ class Robot {
         }
 
         float getLogicLipoVoltage(){
-            return analogRead(logicLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
+            return analogRead(logicLipoVoltagePin); //((analogRead(logicLipoVoltagePin) * 3.3) / 1023.0) * 2 ;
         }
 
         float getPowerLipoVoltage(){
@@ -75,6 +75,8 @@ class Robot {
 
         const int logicLipoVoltagePin = 41;
         const int powerLipoVoltagePin = 26;
+
+        const int 
 };
 
 #endif

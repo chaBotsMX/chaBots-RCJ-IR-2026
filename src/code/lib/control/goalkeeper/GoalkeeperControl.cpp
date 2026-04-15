@@ -22,7 +22,7 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   MovementCommandGk cmd;
   
   // If no line detected, hold position (small movement to stay centered)
-  if (lineAngle > 360) {
+  if (lineAngle >= 360 or irAngle >= 360) {
     cmd.angle = 0;
     cmd.power = 0;
     return cmd;
@@ -38,12 +38,19 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   // Calculate the perpendicular (parallel to line) vector
   // The perpendicular points either left or right of the line
   int ball_side = determineBallSide(lineAngle, irAngle);
+  //Serial.print("Ball side: "); Serial.println(ball_side);
   
   // Calculate the direction perpendicular to the line
-  float parallel_angle = line_angle_rad + (M_PI / 2.0) ? ball_side == -1 : line_angle_rad - (M_PI / 2.0);
-
-  float parallel_x = cos(parallel_angle);
-  float parallel_y = sin(parallel_angle);
+  float parallel_angle;
+  if(lineAngle >= 0  and lineAngle <= 180) parallel_angle = line_angle_rad - M_PI_2;
+  else parallel_angle = line_angle_rad + M_PI_2;
+/*   if (ball_side == -1) {
+    parallel_angle = line_angle_rad + M_PI_2; // M_PI_2 is a standard constant for PI/2
+  } else {
+    parallel_angle = line_angle_rad - M_PI_2;
+  } */
+  float parallel_x = cos(parallel_angle) * ball_side; // Move in the direction of the ball
+  float parallel_y = sin(parallel_angle) * ball_side;
   
   // Vector sum
   // v_result = v_line + k * v_parallel
@@ -62,13 +69,18 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   float result_magnitude = magnitude(smoothed_result_x, smoothed_result_y); //magnitud of movement vector
   
   if (result_angle < 0) result_angle += 360;
+
+  Serial.print("Result angle: "); Serial.print(result_angle); Serial.print(" Parallel angle: "); Serial.println(degrees(parallel_angle));
+  //Serial.print("Line Angle: "); Serial.println(lineAngle);
+
+  power_limit = calculateApproximatePower(irAngle);
   
   // Calculate power based on result magnitude
   int scaled_power = (int)(result_magnitude * power_limit);
   
   // Reduce power if ball is far away (conservative positioning)
   if (irDistance > ball_far_threshold) {
-    scaled_power = (int)(scaled_power * 0.6);
+    scaled_power = (int)(scaled_power * 0.9);
   }
   
   // Constrain power
@@ -81,31 +93,71 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   return cmd;
 }
 
-int GoalkeeperControl::determineBallSide(int lineAngle, int ballAngle) {
-  // Calculate shortest angular difference
-  int diff = angleDifference(ballAngle, lineAngle);
+int GoalkeeperControl::determineBallSide(int line_angle, int ball_angle) {
+/*   float line_angle_rad = radians(line_angle);
+  float ball_angle_rad = radians(ball_angle);
+  // Normalize angles to -PI to PI
+  float normalized_line = normalizeAngle(line_angle_rad);
+  float normalized_ball = normalizeAngle(ball_angle_rad);
   
-  // If difference is positive (ball angle > line angle going CW),
-  // ball is on the left side
-  // If negative, ball is on the right side
-  if (diff > 0 && diff <= 180) {
-    return -1;  // Left side
+  // Calculate the angular difference
+  float diff = normalized_ball - normalized_line;
+  diff = normalizeAngle(diff);
+  
+  // If diff is positive, ball is on the "left" side (go_flag = 0)
+  // If diff is negative, ball is on the "right" side (go_flag = 1)
+  if (diff > 0 && diff < M_PI) {
+    return -1;  // Left
   } else {
-    return 1;   // Right side
+    return 1;  // Right
   }
+ */
+  if(ball_angle <= 360){
+    if(ball_angle >= 90 and ball_angle <= 270) return -1; // left
+    return 1; // right
+  } //return 0;
+  return 0;
 }
 
-int GoalkeeperControl::angleDifference(int angle1, int angle2) {
-  // Calculate shortest angular distance from angle2 to angle1
-  int diff = angle1 - angle2;
-  
-  // Normalize to -180 to +180
-  while (diff > 180) diff -= 360;
-  while (diff < -180) diff += 360;
-  
-  return diff;
+float GoalkeeperControl::normalizeAngle(float angle) {
+  while (angle > M_PI) angle -= 2 * M_PI;
+  while (angle < -M_PI) angle += 2 * M_PI;
+  return angle;
 }
 
 float GoalkeeperControl::magnitude(float x, float y) {
   return sqrt((x * x) + (y * y));
+}
+
+int GoalkeeperControl::calculateApproximatePower(int irAngle) {
+    int angleFromFront = irAngle - 90;
+        
+    // normalize
+    if(angleFromFront > 180) angleFromFront -= 360;
+    if(angleFromFront < -180) angleFromFront += 360;
+        
+    int absOffset = abs(angleFromFront);
+
+    int minPower = 20;   // Power when ball exactly at 90°
+    int midPower = 120;   // Power when ball at 60° or 120°
+    int maxPower = 140;  // Power when ball at sides
+        
+    int basePower;
+    
+    if(absOffset < 15) {
+        basePower = minPower;
+    }
+    else if(absOffset < 40) {
+        basePower = midPower;
+    }
+    else if(absOffset < 90) {
+        basePower = maxPower;
+    }
+    else {
+        basePower = midPower;
+    }
+    
+    int finalPower = (int)(basePower);
+    
+    return constrain(finalPower, 0, maxPower);
 }
