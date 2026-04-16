@@ -23,7 +23,7 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
 
   if(cameraAngle > 140){
     cmd.angle = 90;
-    cmd.power = 60;
+    cmd.power = 90;
     return cmd;
   }
   
@@ -31,7 +31,7 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   if (lineAngle >= 360) {
     int angle = map(cameraAngle, 0, 140, 340, 200);
     cmd.angle = angle;
-    cmd.power = 60;
+    cmd.power = 90;
     return cmd;
   }
   
@@ -145,9 +145,9 @@ int GoalkeeperControl::calculateApproximatePower(int irAngle) {
         
     int absOffset = abs(angleFromFront);
 
-    int minPower = 20;   // Power when ball exactly at 90°
-    int midPower = 120;   // Power when ball at 60° or 120°
-    int maxPower = 140;  // Power when ball at sides
+    int minPower = 30;   // Power when ball exactly at 90°
+    int midPower = 140;   // Power when ball at 60° or 120°
+    int maxPower = 160;  // Power when ball at sides
         
     int basePower;
     

@@ -15,6 +15,7 @@
 struct MovementCommandAtk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
+  float offset;
 };
 
 class AttackerControl {
@@ -30,8 +31,14 @@ class AttackerControl {
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance
+      int irAngle, int irDistance,
+      int cameraAngle
     );
+
+    float getAngularOffset(int cameraAngle);
+
+    bool isBallOnFront(int irAngle);
+
 
     LineAvoiding line;
     
@@ -39,7 +46,6 @@ class AttackerControl {
     bool ballDetected(int irAngle);
     int adjustBallAngleClose(int irAngle);
     bool isBallClose(int irDistance);
-    bool isBallOnFront(int irAngle);
     int calculateOrbitPower(int irAngle, int irDistance);
 };
 

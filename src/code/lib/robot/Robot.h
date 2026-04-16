@@ -26,7 +26,7 @@ class Robot {
     
         Robot() : pd(4, 0.1, 200) {
             pinMode(lineNeoPin, OUTPUT);
-            pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
+            pinMode(button1Pin, INPUT_PULLDOWN); pinMode(button2Pin, INPUT_PULLDOWN);
         }
 
         float getLogicLipoVoltage(){
@@ -37,8 +37,8 @@ class Robot {
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
         
-        void updateAttackerControl(int irAngle, int irDistance, int lineAngle){
-            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance);
+        void updateAttackerControl(int irAngle, int irDistance, int lineAngle, int cameraAngle){
+            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle);
         }
 
         void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle){
@@ -101,13 +101,18 @@ class Robot {
             return button2Toggle;
         }
 
-        int getYawCorrection(int cameraAngle){
+        int getYawCorrection(int cameraAngle, int irAngle){
             float setpoint = 0; // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
             if(wasButton1Pressed()) setpoint = currentYaw;
             float error = currentYaw - setpoint;
-            float offset = cameraAngle - 70;
-            return pd.getCorrection(error + offset);
+            float offset = 0;
+            if(attacker.isBallOnFront(irAngle) and cameraAngle <= 140){
+                if(cameraAngle < 50) offset = 45; // Ball on left, turn slightly left
+                else if(cameraAngle > 90) offset = -45; // Ball on right, turn slightly right
+                else offset = 0;
+            };
+            return pd.getCorrection(error - offset);
         }
         
     private:

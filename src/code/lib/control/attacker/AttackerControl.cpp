@@ -10,28 +10,33 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
+MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle) {
     MovementCommandAtk cmd;
   
     if(lineAngle <= 360) {
         cmd.angle = line.getAvoidLineAngle(lineAngle);
-        cmd.power = 100; // Line detected
+        cmd.power = 140; // Line detected
+        cmd.offset = 0;
     }
     else if(isBallOnFront(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 160; // Ball in front
+        cmd.power = 190; // Ball in front
+        cmd.offset = getAngularOffset(cameraAngle);
     }
     else if(isBallClose(irDistance)) {
         cmd.angle = adjustBallAngleClose(irAngle);        
         cmd.power = calculateOrbitPower(irAngle, irDistance);
+        cmd.offset = 0;
     }
     else if(ballDetected(irAngle)) {
         cmd.angle = irAngle;
         cmd.power = 120 + irDistance * 0.1; // Ball detected
+        cmd.offset = 0;
     }
     else {
         cmd.angle = 0;
         cmd.power = 0; // No ball detected
+        cmd.offset = 0;
     }
   
     return cmd;
@@ -73,7 +78,7 @@ bool AttackerControl::isBallOnFront(int irAngle){
 }
 
 bool AttackerControl::isBallClose(int irDistance){
-    if(irDistance < 200) return true;
+    if(irDistance < 230) return true;
     return false;
 }
 
@@ -87,12 +92,12 @@ int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
     int absOffset = abs(angleFromFront);
 
     int minPower = 80;   // Power when ball exactly at 90°
-    int midPower = 100;  // Power when ball at sides
-    int maxPower = 120;  // Power when ball behind
+    int midPower = 140;  // Power when ball at sides
+    int maxPower = 180;  // Power when ball behind
         
     int basePower;
     
-    if(absOffset < 45) {
+    if(absOffset < 30) {
         basePower = minPower;
     }
     else if(absOffset < 90) {
@@ -105,4 +110,11 @@ int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
     int finalPower = (int)(basePower);
     
     return constrain(finalPower, minPower, maxPower);
+}
+
+float AttackerControl::getAngularOffset(int cameraAngle){
+    if(cameraAngle <= 140){
+        return cameraAngle - 70;
+    }
+    return 0;
 }

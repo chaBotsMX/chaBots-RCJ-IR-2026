@@ -14,6 +14,8 @@ int irDistance = 254;
 int lineAngle = 500;
 int cameraAngle = 200;
 
+float angularOffset = 0;
+
 void setup() {
   Serial.begin(115200);
   uart.beginIR(2000000);
@@ -41,27 +43,27 @@ void loop() {
   lineAngle = uart.lineAngle*2;
   cameraAngle = uart.cameraAngle;
 
-  if(millis() - updateTimer >= 10){
+  if(millis() - updateTimer >= 5){
     updateTimer = millis();
     
     robot.updateButtons();
-    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle);
+    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle);
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
     Serial.print("IR Distance: ");Serial.println(irDistance);
-    Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
     Serial.print("Camera Angle: ");Serial.println(cameraAngle);
-    Serial.println(robot.wasButton2Pressed());
   }
 
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(irAngle, irDistance, lineAngle);
+    robot.updateAttackerControl(irAngle, irDistance, lineAngle, cameraAngle);
 
     robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 
     if(robot.hasBall(irAngle, irDistance)){
       robot.kicker.kick();
-    } 
+    }
   } else{
     robot.drive.writeAllMotorsOutput(0);
   }

@@ -52,7 +52,7 @@ void loop() {
     updateTimer = millis();
     
     robot.updateButtons();
-    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle);
+    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(0);
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
     Serial.print("IR Distance: ");Serial.println(irDistance);
@@ -61,7 +61,7 @@ void loop() {
   }
 
   if(robot.wasButton2Pressed()){
-    robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle, cameraAngle);
+    robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle, 70);
     robot.drive.driveToAngle(robot.gkCmd.angle, robot.gkCmd.power, yawCorrection);
   } else{
     robot.drive.writeAllMotorsOutput(0);
