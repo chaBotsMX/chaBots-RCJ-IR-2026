@@ -25,10 +25,8 @@ class Robot {
         MovementCommandGk gkCmd;
     
         Robot() : pd(4, 0.1, 200) {
-            if(lineNeoOn){
-                pinMode(lineNeoPin, OUTPUT);
-                digitalWrite(lineNeoPin, HIGH);
-            }
+            pinMode(lineNeoPin, OUTPUT);
+            pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
         }
 
         float getLogicLipoVoltage(){
@@ -68,15 +66,48 @@ class Robot {
 
             return false;
         }
+
+        bool wasButton1Pressed(){
+            static bool lastState = false;
+            bool currentState = digitalRead(button1Pin);
+            bool pressed = (currentState && !lastState);
+            lastState = currentState;
+            return pressed;
+        }
+
+        bool wasButton2Pressed(){
+            static bool lastState = false;
+            bool currentState = digitalRead(button2Pin);
+            bool pressed = (currentState && !lastState);
+            lastState = currentState;
+            return pressed;
+        }
+        
+        void buzz(int freq, int time){
+            tone(buzzerPin, freq, time);
+        }
+
+        void setLineNeo(bool on){
+            digitalWrite(lineNeoPin, on ? HIGH : LOW);
+        }
+
+        int getYawCorrection(){
+            float setpoint = 0; // Desired yaw angle (e.g., facing forward)
+            float currentYaw = imu.getYaw();
+            if(wasButton2Pressed()) setpoint = currentYaw;
+            return pd.getCorrection(currentYaw - setpoint);
+        }
         
     private:
-        bool lineNeoOn = true;
         const int lineNeoPin = 23;
 
         const int logicLipoVoltagePin = 41;
         const int powerLipoVoltagePin = 26;
 
-        const int 
+        const int button1Pin = 30;
+        const int button2Pin = 27;
+
+        const int buzzerPin = 4;
 };
 
 #endif

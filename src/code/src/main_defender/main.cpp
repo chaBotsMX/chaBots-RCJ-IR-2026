@@ -45,14 +45,19 @@ void loop() {
   if(millis() - updateTimer >= 10){
     updateTimer = millis();
     
-    if(robot.imu.update()) yawCorrection = robot.pd.getCorrection(robot.imu.getYaw());
+    if(robot.imu.update()) yawCorrection = robot.getYawCorrection();
     
     //Serial.print("IR Angle: ");Serial.println(irAngle);
     //Serial.print("IR Distance: ");Serial.println(irDistance);
     //Serial.print("Line Angle: ");Serial.println(lineAngle);
   }
 
-  robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle);
-
-  robot.drive.driveToAngle(robot.gkCmd.angle, robot.gkCmd.power, yawCorrection);
+  if(robot.wasButton1Pressed()){
+    robot.updateGoalkeeperControl(irAngle, irDistance, lineAngle);
+    robot.drive.driveToAngle(robot.gkCmd.angle, robot.gkCmd.power, yawCorrection);
+    robot.setLineNeo(true);
+  } else{
+    robot.drive.writeAllMotorsOutput(0);
+    robot.setLineNeo(false);
+  }
 }
