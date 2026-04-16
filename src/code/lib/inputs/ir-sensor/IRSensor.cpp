@@ -70,6 +70,7 @@ void IRSensor::updateSensors(){
 void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numSensors; i++){
     int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 2000); //invert and cap to 0-2000
+    if(i == 6 or i == 8) currentDetection = 0;
     photodiodeReadings[i] = currentDetection;
   }
 }
@@ -166,8 +167,8 @@ void IRSensor::printIR(unsigned long timeLimit){
     lastUpdate = millis();
 
     for(int j = 0; j < 16; j++){
-      Serial.print(tsspTimesDetected[j]); Serial.print(' ');
-      //Serial.print(photodiodeReadings[j]); Serial.print(' ');
+      //Serial.print(tsspTimesDetected[j]); Serial.print(' ');
+      Serial.print(photodiodeReadings[j]); Serial.print(' ');
     }
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');

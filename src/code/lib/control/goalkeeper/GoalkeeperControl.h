@@ -39,7 +39,8 @@ class GoalkeeperControl {
      */
     MovementCommandGk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance
+      int irAngle, int irDistance,
+      int cameraAngle
     );
     
     // Tuning parameters

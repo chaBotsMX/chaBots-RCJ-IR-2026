@@ -15,7 +15,7 @@ unsigned long timer = 0;
 void setup() {
   Serial.begin(115200);
   Serial.println("hi");
-  uart.begin(2000000);
+  uart.beginIR(2000000);
   delay(1000);
 }
 

@@ -18,13 +18,20 @@ GoalkeeperControl::GoalkeeperControl() {
   smoothed_result_y = 0;
 }
 
-MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
+MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle) {
   MovementCommandGk cmd;
+
+  if(cameraAngle > 140){
+    cmd.angle = 90;
+    cmd.power = 60;
+    return cmd;
+  }
   
-  // If no line detected, hold position (small movement to stay centered)
-  if (lineAngle >= 360 or irAngle >= 360) {
-    cmd.angle = 0;
-    cmd.power = 0;
+  // If no line detected
+  if (lineAngle >= 360) {
+    int angle = map(cameraAngle, 0, 140, 340, 200);
+    cmd.angle = angle;
+    cmd.power = 60;
     return cmd;
   }
   

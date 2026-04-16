@@ -41,8 +41,8 @@ class Robot {
             atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance);
         }
 
-        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle){
-            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance);
+        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle){
+            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle);
         }
 
         bool hasBall(int irAngle, int irDistance){
@@ -67,21 +67,23 @@ class Robot {
             return false;
         }
 
-        bool wasButton1Pressed(){
-            static bool lastState = false;
-            bool currentState = digitalRead(button1Pin);
-            bool pressed = (currentState && !lastState);
-            lastState = currentState;
-            return pressed;
-        }
+        void updateButtons(){
+            button1State = digitalRead(button1Pin);
+            button2State = digitalRead(button2Pin);
 
-        bool wasButton2Pressed(){
-            static bool lastState = false;
-            bool currentState = digitalRead(button2Pin);
-            bool pressed = (currentState && !lastState);
-            lastState = currentState;
-            return pressed;
-        }
+            if (button1State && !lastButton1State) {
+                button1Toggle = !button1Toggle;
+                buzz(1000, 100);
+            }
+
+            if (button2State && !lastButton2State) {
+                button2Toggle = !button2Toggle;
+                buzz(1000, 100);
+            }
+
+            lastButton1State = button1State;
+            lastButton2State = button2State;
+        };
         
         void buzz(int freq, int time){
             tone(buzzerPin, freq, time);
@@ -91,11 +93,21 @@ class Robot {
             digitalWrite(lineNeoPin, on ? HIGH : LOW);
         }
 
-        int getYawCorrection(){
+        bool wasButton1Pressed(){
+            return button1Toggle;
+        }
+
+        bool wasButton2Pressed(){
+            return button2Toggle;
+        }
+
+        int getYawCorrection(int cameraAngle){
             float setpoint = 0; // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
-            if(wasButton2Pressed()) setpoint = currentYaw;
-            return pd.getCorrection(currentYaw - setpoint);
+            if(wasButton1Pressed()) setpoint = currentYaw;
+            float error = currentYaw - setpoint;
+            float offset = cameraAngle - 70;
+            return pd.getCorrection(error + offset);
         }
         
     private:
@@ -108,6 +120,13 @@ class Robot {
         const int button2Pin = 27;
 
         const int buzzerPin = 4;
+
+        bool lastButton1State = false;
+        bool lastButton2State = false;
+        bool button1State = false;
+        bool button2State = false;
+        bool button1Toggle = false;
+        bool button2Toggle = false;
 };
 
 #endif
