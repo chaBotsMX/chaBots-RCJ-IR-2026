@@ -22,7 +22,7 @@ class LineAvoiding {
             }
 
             if(recovering){
-                if(millis() - recoveryStartTime >= 700) recovering = false;
+                if(millis() - recoveryStartTime >= 500) recovering = false;
             }
         }
 

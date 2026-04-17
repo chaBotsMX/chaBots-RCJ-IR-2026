@@ -24,9 +24,9 @@ class Robot {
         MovementCommandAtk atkCmd;
         MovementCommandGk gkCmd;
     
-        Robot() : pd(4, 0.1, 200) {
+        Robot() : pd(4, 0.1, 100) {
             pinMode(lineNeoPin, OUTPUT);
-            pinMode(button1Pin, INPUT_PULLDOWN); pinMode(button2Pin, INPUT_PULLDOWN);
+            pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
         }
 
         float getLogicLipoVoltage(){

@@ -15,11 +15,11 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
   
     if(lineAngle <= 360) {
         cmd.angle = line.getAvoidLineAngle(lineAngle);
-        cmd.power = 200; // Line detected
+        cmd.power = 100; // Line detected
     }
     else if(isBallOnFront(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 160; // Ball in front
+        cmd.power = 130; // Ball in front
     }
     else if(isBallClose(irDistance)) {
         cmd.angle = adjustBallAngleClose(irAngle);        
@@ -27,7 +27,7 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
     }
     else if(ballDetected(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 120 + irDistance * 0.1; // Ball detected
+        cmd.power = 90 + irDistance * 0.1; // Ball detected
     }
     else {
         cmd.angle = 0;
@@ -73,7 +73,7 @@ bool AttackerControl::isBallOnFront(int irAngle){
 }
 
 bool AttackerControl::isBallClose(int irDistance){
-    if(irDistance < 240) return true;
+    if(irDistance < 190) return true;
     return false;
 }
 
@@ -86,13 +86,13 @@ int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
         
     int absOffset = abs(angleFromFront);
 
-    int minPower = 50;   // Power when ball exactly at 90°
-    int midPower = 140;  // Power when ball at sides
-    int maxPower = 180;  // Power when ball behind
+    int minPower = 70;   // Power when ball exactly at 90°
+    int midPower = 90;  // Power when ball at sides
+    int maxPower = 110;  // Power when ball behind
         
     int basePower;
     
-    if(absOffset < 25) {
+    if(absOffset < 30) {
         basePower = minPower;
     }
     else if(absOffset < 60){
