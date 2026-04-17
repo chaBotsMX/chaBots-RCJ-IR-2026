@@ -108,8 +108,8 @@ class Robot {
             float error = currentYaw - setpoint;
             float offset = 0;
             if(attacker.isBallOnFront(irAngle) and cameraAngle <= 140){
-                if(cameraAngle < 50) offset = 45; // Ball on left, turn slightly left
-                else if(cameraAngle > 90) offset = -45; // Ball on right, turn slightly right
+                if(cameraAngle < 60) offset = 40; // Ball on left, turn slightly left
+                else if(cameraAngle > 80) offset = -40; // Ball on right, turn slightly right
                 else offset = 0;
             };
             return pd.getCorrection(error - offset);

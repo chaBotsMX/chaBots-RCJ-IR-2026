@@ -15,28 +15,23 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
   
     if(lineAngle <= 360) {
         cmd.angle = line.getAvoidLineAngle(lineAngle);
-        cmd.power = 140; // Line detected
-        cmd.offset = 0;
+        cmd.power = 150; // Line detected
     }
     else if(isBallOnFront(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 190; // Ball in front
-        cmd.offset = getAngularOffset(cameraAngle);
+        cmd.power = 200; // Ball in front
     }
     else if(isBallClose(irDistance)) {
         cmd.angle = adjustBallAngleClose(irAngle);        
         cmd.power = calculateOrbitPower(irAngle, irDistance);
-        cmd.offset = 0;
     }
     else if(ballDetected(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 120 + irDistance * 0.1; // Ball detected
-        cmd.offset = 0;
+        cmd.power = 150 + irDistance * 0.1; // Ball detected
     }
     else {
         cmd.angle = 0;
         cmd.power = 0; // No ball detected
-        cmd.offset = 0;
     }
   
     return cmd;
@@ -92,12 +87,12 @@ int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
     int absOffset = abs(angleFromFront);
 
     int minPower = 80;   // Power when ball exactly at 90°
-    int midPower = 140;  // Power when ball at sides
+    int midPower = 160;  // Power when ball at sides
     int maxPower = 180;  // Power when ball behind
         
     int basePower;
     
-    if(absOffset < 30) {
+    if(absOffset < 35) {
         basePower = minPower;
     }
     else if(absOffset < 90) {
@@ -117,4 +112,9 @@ float AttackerControl::getAngularOffset(int cameraAngle){
         return cameraAngle - 70;
     }
     return 0;
+}
+
+bool AttackerControl::robotHasBall(int irAngle, int irDistance){
+    if((irAngle >= 80 and irAngle <= 100) and irDistance < 150) return true;
+    return false;
 }

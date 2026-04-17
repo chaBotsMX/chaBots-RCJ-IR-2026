@@ -8,6 +8,7 @@ sensor.set_brightness(0)
 sensor.set_saturation(0)
 
 sensor.set_auto_gain(False, gain_db=20)  # Fixed gain
+sensor.set_auto_rotation(False)
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
@@ -17,13 +18,10 @@ sensor.skip_frames(time=2000)
 
 clock = time.clock()
 
-yellow_threshold = (26, 100, -35, 127, 36, 127)
-blue_threshold = (0, 54, -17, 35, -71, -8)
+yellow_threshold = (50, 100, 11, 127, 39, 127)
+blue_threshold = (0, 32, -2, 23, -128, 0)
 
-goal_threshold = yellow_threshold
-#goal_threshold = blue_threshold
-
-roi = (0, 100, 320, 100)
+roi = (0, 90, 320, 90)
 
 FOV = 140
 
@@ -37,7 +35,7 @@ while True:
     clock.tick()
     img = sensor.snapshot()
 
-    for blob in img.find_blobs([goal_threshold], pixels_threshold=5, area_threshold=300):
+    for blob in img.find_blobs([yellow_threshold, blue_threshold], pixels_threshold=5, area_threshold=500):
         if blob is not None:
             approximate_angle = int((blob.cx() * FOV) / 320)
 

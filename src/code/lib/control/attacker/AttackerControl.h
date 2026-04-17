@@ -15,7 +15,6 @@
 struct MovementCommandAtk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
-  float offset;
 };
 
 class AttackerControl {
@@ -39,7 +38,6 @@ class AttackerControl {
 
     bool isBallOnFront(int irAngle);
 
-
     LineAvoiding line;
     
   private:
@@ -47,6 +45,7 @@ class AttackerControl {
     int adjustBallAngleClose(int irAngle);
     bool isBallClose(int irDistance);
     int calculateOrbitPower(int irAngle, int irDistance);
+    bool robotHasBall(int irAngle, int irDistance);
 };
 
 #endif
