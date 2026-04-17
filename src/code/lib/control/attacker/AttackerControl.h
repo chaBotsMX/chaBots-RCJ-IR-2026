@@ -31,12 +31,15 @@ class AttackerControl {
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
       int irAngle, int irDistance,
-      int cameraAngle
+      int cameraAngle,
+      bool gk
     );
 
     float getAngularOffset(int cameraAngle);
 
     bool isBallOnFront(int irAngle);
+
+    bool robotHasBall(int irAngle, int irDistance);
 
     LineAvoiding line;
     
@@ -45,7 +48,6 @@ class AttackerControl {
     int adjustBallAngleClose(int irAngle);
     bool isBallClose(int irDistance);
     int calculateOrbitPower(int irAngle, int irDistance);
-    bool robotHasBall(int irAngle, int irDistance);
 };
 
 #endif

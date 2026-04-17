@@ -40,7 +40,8 @@ class GoalkeeperControl {
     MovementCommandGk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
       int irAngle, int irDistance,
-      int cameraAngle
+      int cameraAngle,
+      float yaw
     );
     
     // Tuning parameters
@@ -52,9 +53,9 @@ class GoalkeeperControl {
     
   private:
     // Tuning coefficients
-    float k_line = 5.0;                    // How strongly to follow the line
-    int power_limit = 190;                 // Max power to motors
-    float smoothing_alpha = 0.1;          // Exponential smoothing factor
+    float k_line = 6.0;                    // How strongly to follow the line
+    int power_limit = 200;                 // Max power to motors
+    float smoothing_alpha = 0.3;          // Exponential smoothing factor
     int ball_far_threshold = 230;          // Distance above which ball is "far"
     
     // State for exponential smoothing
@@ -73,7 +74,9 @@ class GoalkeeperControl {
 
     float magnitude(float x, float y);
 
-    int calculateApproximatePower(int irAngle);
+    int calculateApproximatePower(int irAngle, int lineAngle);
+
+    bool isRobotOnEdge(int parallel_angle);
 };
 
 #endif

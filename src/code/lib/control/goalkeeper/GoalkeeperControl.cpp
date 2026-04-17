@@ -18,11 +18,11 @@ GoalkeeperControl::GoalkeeperControl() {
   smoothed_result_y = 0;
 }
 
-MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle) {
+MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle, float yaw) {
   MovementCommandGk cmd;
 
-  if((cameraAngle > 140) or cameraAngle > 130 or cameraAngle < 10){
-    cmd.angle = 90;
+  if(cameraAngle > 140){
+    cmd.angle = 270;
     cmd.power = 130;
     return cmd;
   }
@@ -55,6 +55,7 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   
   // Calculate the direction perpendicular to the line
   float parallel_angle;
+  float absolute_parallel_angle;
   if(lineAngle >= 0  and lineAngle <= 180) parallel_angle = line_angle_rad - M_PI_2;
   else parallel_angle = line_angle_rad + M_PI_2;
 /*   if (ball_side == -1) {
@@ -62,9 +63,19 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   } else {
     parallel_angle = line_angle_rad - M_PI_2;
   } */
-  float parallel_x = cos(parallel_angle) * ball_side; // Move in the direction of the ball
-  float parallel_y = sin(parallel_angle) * ball_side;
-  
+
+  absolute_parallel_angle = degrees(parallel_angle) + yaw;
+  while(absolute_parallel_angle > 180) absolute_parallel_angle -= 360;
+  while(absolute_parallel_angle < -180) absolute_parallel_angle += 360;
+
+  int blocker;
+  if(absolute_parallel_angle < -25 and ball_side == 1) blocker = 0;
+  else if(absolute_parallel_angle > 25 and ball_side == -1) blocker = 0;
+  else blocker = 1;
+
+  float parallel_x = cos(parallel_angle) * ball_side * blocker; // Move in the direction of the ball
+  float parallel_y = sin(parallel_angle) * ball_side * blocker;
+
   // Vector sum
   // v_result = v_line + k * v_parallel
   // The v_line component keeps robot anchored to the line
@@ -83,18 +94,15 @@ MovementCommandGk GoalkeeperControl::calculateMovement(int lineAngle, int irAngl
   
   if (result_angle < 0) result_angle += 360;
 
-  Serial.print("Result angle: "); Serial.print(result_angle); Serial.print(" Parallel angle: "); Serial.println(degrees(parallel_angle));
+  Serial.print("Result angle: "); Serial.print(result_angle);
+  Serial.print(" Parallel angle: "); Serial.print(degrees(parallel_angle));
+  Serial.print(" Absolute parallel angle "); Serial.println(absolute_parallel_angle);
   //Serial.print("Line Angle: "); Serial.println(lineAngle);
 
-  power_limit = calculateApproximatePower(irAngle);
+  power_limit = calculateApproximatePower(irAngle, result_angle);
   
   // Calculate power based on result magnitude
   int scaled_power = (int)(result_magnitude * power_limit);
-  
-  // Reduce power if ball is far away (conservative positioning)
-  if (irDistance > ball_far_threshold) {
-    scaled_power = (int)(scaled_power * 0.95);
-  }
   
   // Constrain power
   scaled_power = constrain(scaled_power, 0, power_limit);
@@ -142,7 +150,8 @@ float GoalkeeperControl::magnitude(float x, float y) {
   return sqrt((x * x) + (y * y));
 }
 
-int GoalkeeperControl::calculateApproximatePower(int irAngle) {
+int GoalkeeperControl::calculateApproximatePower(int irAngle, int lineAngle) {
+    if(lineAngle > 200 and lineAngle < 340) return 30;
     int angleFromFront = irAngle - 90;
         
     // normalize
@@ -153,15 +162,15 @@ int GoalkeeperControl::calculateApproximatePower(int irAngle) {
 
     int minPower = 30;   // Power when ball exactly at 90°
     int midPower = 45;   // Power when ball at 60° or 120°
-    int maxPower = 160;  // Power when ball at sides
+    int maxPower = 200;  // Power when ball at sides
         
     int basePower;
     
     if(absOffset < 15) {
         basePower = minPower;
     }
-    else if(absOffset < 40) {
-        basePower = maxPower * 0.8;
+    else if(absOffset < 30) {
+        basePower = maxPower * 0.9;
     }
     else if(absOffset < 90) {
         basePower = maxPower;
@@ -173,4 +182,9 @@ int GoalkeeperControl::calculateApproximatePower(int irAngle) {
     int finalPower = (int)(basePower);
     
     return constrain(finalPower, 0, maxPower);
+}
+
+bool GoalkeeperControl::isRobotOnEdge(int parallel_angle){
+  if(parallel_angle % 360 > -25 and parallel_angle % 360 < 25) return false;
+  return true;
 }

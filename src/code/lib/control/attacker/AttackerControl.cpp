@@ -10,16 +10,16 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle) {
+MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle, bool gk) {
     MovementCommandAtk cmd;
   
     if(lineAngle <= 360) {
         cmd.angle = line.getAvoidLineAngle(lineAngle);
-        cmd.power = 150; // Line detected
+        cmd.power = 200; // Line detected
     }
     else if(isBallOnFront(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 200; // Ball in front
+        cmd.power = 160; // Ball in front
     }
     else if(isBallClose(irDistance)) {
         cmd.angle = adjustBallAngleClose(irAngle);        
@@ -27,7 +27,7 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
     }
     else if(ballDetected(irAngle)) {
         cmd.angle = irAngle;
-        cmd.power = 150 + irDistance * 0.1; // Ball detected
+        cmd.power = 120 + irDistance * 0.1; // Ball detected
     }
     else {
         cmd.angle = 0;
@@ -73,7 +73,7 @@ bool AttackerControl::isBallOnFront(int irAngle){
 }
 
 bool AttackerControl::isBallClose(int irDistance){
-    if(irDistance < 230) return true;
+    if(irDistance < 240) return true;
     return false;
 }
 
@@ -86,14 +86,17 @@ int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
         
     int absOffset = abs(angleFromFront);
 
-    int minPower = 80;   // Power when ball exactly at 90°
-    int midPower = 160;  // Power when ball at sides
+    int minPower = 50;   // Power when ball exactly at 90°
+    int midPower = 140;  // Power when ball at sides
     int maxPower = 180;  // Power when ball behind
         
     int basePower;
     
-    if(absOffset < 35) {
+    if(absOffset < 25) {
         basePower = minPower;
+    }
+    else if(absOffset < 60){
+        basePower = midPower * 0.8;
     }
     else if(absOffset < 90) {
         basePower = midPower;
@@ -115,6 +118,6 @@ float AttackerControl::getAngularOffset(int cameraAngle){
 }
 
 bool AttackerControl::robotHasBall(int irAngle, int irDistance){
-    if((irAngle >= 80 and irAngle <= 100) and irDistance < 150) return true;
+    if((irAngle >= 80 and irAngle <= 100) and irDistance < 140) return true;
     return false;
 }

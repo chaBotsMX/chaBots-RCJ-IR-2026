@@ -32,6 +32,8 @@ void setup() {
   if (!robot.imu.begin(Serial7)) {
     Serial.println("imu not found");
   }
+
+  Serial.println("1");
 }
 
 void loop() {
@@ -43,21 +45,22 @@ void loop() {
   lineAngle = uart.lineAngle*2;
   cameraAngle = uart.cameraAngle;
 
-  if(millis() - updateTimer >= 5){
+  if(millis() - updateTimer >= 10){
     updateTimer = millis();
     
     robot.updateButtons();
-    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle);
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
-    Serial.print("IR Distance: ");Serial.println(irDistance);
-    //Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("IR Distance: ");Serial.println(irDistance);
+    Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
-    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
   }
 
+  if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle, irDistance);
+
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(irAngle, irDistance, lineAngle, cameraAngle);
+    robot.updateAttackerControl(irAngle, irDistance, lineAngle, cameraAngle, false);
 
     robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 
