@@ -19,6 +19,7 @@ sensor.skip_frames(time=2000)
 clock = time.clock()
 
 yellow_threshold = (50, 100, 11, 127, 39, 127)
+#yellow_threshold = (36, 100, 19, 127, 40, 127) #hotel
 blue_threshold = (0, 32, -2, 23, -128, 0)
 
 roi = (0, 80, 320, 80)
@@ -35,7 +36,7 @@ while True:
     clock.tick()
     img = sensor.snapshot()
 
-    for blob in img.find_blobs([yellow_threshold, blue_threshold], pixels_threshold=5, area_threshold=300):
+    for blob in img.find_blobs([yellow_threshold], pixels_threshold=5, area_threshold=3000):
         if blob is not None:
             approximate_angle = int((blob.cx() * FOV) / 320)
 

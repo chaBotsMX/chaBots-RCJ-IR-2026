@@ -146,7 +146,7 @@ void loop() {
   irAngle = uart.irAngle*2;
   irDistance = uart.irDistance;
   lineAngle = uart.lineAngle*2;
-  cameraAngle = 200;
+  cameraAngle = uart.cameraAngle;
 
   if(millis() - updateTimer >= 10){
     updateTimer = millis();
@@ -174,7 +174,7 @@ void loop() {
 
     else if(cameraAngle > 140){
       angle = robot.atkCmd.angle;
-      power = 130;
+      power = 90;
     }
 
     else if(cameraAngle < 30){

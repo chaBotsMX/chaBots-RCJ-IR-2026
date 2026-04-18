@@ -54,7 +54,7 @@ void loop() {
     //Serial.print("IR Distance: ");Serial.println(irDistance);
     Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
-    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
   }
 
   if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle, irDistance);
