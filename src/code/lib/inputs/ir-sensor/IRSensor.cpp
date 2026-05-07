@@ -69,7 +69,8 @@ void IRSensor::updateSensors(){
 
 void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numSensors; i++){
-    int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 2000); //invert and cap to 0-2000
+    int currentDetection = constrain(4070 - analogRead(photodiodes[i]), 0, 3000); //invert and cap to 0-2000
+    if(i == 6 or i == 8) currentDetection = 0;
     photodiodeReadings[i] = currentDetection;
   }
 }
@@ -155,7 +156,7 @@ int IRSensor::getAngle(){
 }
 
 int IRSensor::getDistance(){
-  if(intensity <= 2000 && arePhotodiodesDetecting()) return map(2000 - intensity, 0, 2000, 0, 253);
+  if(intensity <= 3000 && arePhotodiodesDetecting()) return map(3000 - intensity, 0, 3000, 0, 253);
   return 254;
 }
 
@@ -166,7 +167,7 @@ void IRSensor::printIR(unsigned long timeLimit){
     lastUpdate = millis();
 
     for(int j = 0; j < 16; j++){
-      //Serial.print(tsspTimesDetected[j]); Serial.print('\t');
+      //Serial.print(tsspTimesDetected[j]); Serial.print(' ');
       Serial.print(photodiodeReadings[j]); Serial.print(' ');
     }
     
@@ -176,12 +177,4 @@ void IRSensor::printIR(unsigned long timeLimit){
     Serial.print("arePhotodiodesDetecting: "); Serial.print(arePhotodiodesDetecting()); Serial.print(' ');
     Serial.print("distance: "); Serial.print(getDistance()); Serial.print('\n');
   }
-}
-
-float IRSensor::getBallVectorX(){
-  return ballVectorX;
-}
-
-float IRSensor::getBallVectorY(){
-  return ballVectorY;
 }

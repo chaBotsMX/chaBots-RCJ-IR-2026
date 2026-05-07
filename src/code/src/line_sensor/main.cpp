@@ -12,7 +12,7 @@ unsigned long timer;
 void setup() {
   Serial.begin(115200);
   ls.begin();
-  uart.begin(2000000);
+  uart.beginLine(2000000);
   delay(1000);
 }
 

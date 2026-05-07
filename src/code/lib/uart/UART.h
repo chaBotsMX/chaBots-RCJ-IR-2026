@@ -20,13 +20,15 @@ class UART {
     int irAngle = 500;
     int irDistance = 254;
     int lineAngle = 500;
+    int cameraAngle = 200;
 
     DataReceiver irReceiver   = DataReceiver(2); //angle and distance
     DataReceiver lineReceiver = DataReceiver(1); // angle
+    DataReceiver cameraReceiver = DataReceiver(1); // approximate angle
 
     //main
-    UART(HardwareSerial& irPort, HardwareSerial& linePort)
-      : _irSerial(&irPort), _lineSerial(&linePort) {}
+    UART(HardwareSerial& irPort, HardwareSerial& linePort, HardwareSerial& cameraPort)
+      : _irSerial(&irPort), _lineSerial(&linePort), _cameraSerial(&cameraPort) {}
 
     //ir
     UART(HardwareSerial& port, IRBoard)
@@ -36,9 +38,16 @@ class UART {
     UART(HardwareSerial& port, LineBoard)
       : _irSerial(nullptr), _lineSerial(&port) {}
 
-    void begin(long baud) {
+    void beginIR(long baud) {
       if(_irSerial) _irSerial->begin(baud);
+    }
+
+    void beginLine(long baud) {
       if(_lineSerial) _lineSerial->begin(baud);
+    }
+
+     void beginCamera(long baud) {
+      if(_cameraSerial) _cameraSerial->begin(baud);
     }
 
     void receive() {
@@ -54,6 +63,13 @@ class UART {
         lineReceiver.feed(_lineSerial->read());
         if (lineReceiver.ready) {
           lineAngle = lineReceiver.data[0];
+        }
+      }
+
+      while(_cameraSerial->available()) {
+        cameraReceiver.feed(_cameraSerial->read());
+        if (cameraReceiver.ready) {
+          cameraAngle = cameraReceiver.data[0];
         }
       }
     }
@@ -74,6 +90,7 @@ class UART {
   private:
     HardwareSerial* _irSerial;
     HardwareSerial* _lineSerial;
+    HardwareSerial* _cameraSerial;
 };
 
 #endif

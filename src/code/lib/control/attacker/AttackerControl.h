@@ -12,7 +12,7 @@
 #include <Arduino.h>
 #include "LineAvoiding.h"
 
-struct MovementCommand {
+struct MovementCommandAtk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
 };
@@ -28,15 +28,26 @@ class AttackerControl {
      * @param irDistance: Distance from IR sensor
      * @return MovementCommand with angle and power
      */
-    MovementCommand calculateMovement( //recieves params, returns movement command function
+    MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance
+      int irAngle, int irDistance,
+      int cameraAngle,
+      bool gk
     );
+
+    float getAngularOffset(int cameraAngle);
+
+    bool isBallOnFront(int irAngle);
+
+    bool robotHasBall(int irAngle, int irDistance);
 
     LineAvoiding line;
     
   private:
-   
+    bool ballDetected(int irAngle);
+    int adjustBallAngleClose(int irAngle);
+    bool isBallClose(int irDistance);
+    int calculateOrbitPower(int irAngle, int irDistance);
 };
 
 #endif

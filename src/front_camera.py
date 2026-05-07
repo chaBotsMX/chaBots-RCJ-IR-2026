@@ -1,0 +1,50 @@
+# front_camera.py
+
+import sensor, time
+from pyb import UART
+
+sensor.set_contrast(0)
+sensor.set_brightness(0)
+sensor.set_saturation(0)
+
+sensor.set_auto_gain(False, gain_db=20)  # Fixed gain
+sensor.set_auto_rotation(False)
+
+sensor.reset()
+sensor.set_pixformat(sensor.RGB565)
+sensor.set_framesize(sensor.QVGA)
+
+sensor.skip_frames(time=2000)
+
+clock = time.clock()
+
+yellow_threshold = (50, 100, 11, 127, 39, 127)
+#yellow_threshold = (36, 100, 19, 127, 40, 127) #hotel
+blue_threshold = (0, 32, -2, 23, -128, 0)
+
+roi = (0, 80, 320, 80)
+
+FOV = 140
+
+approximate_angle = 200
+
+uart = UART(3, 115200, timeout_char=0)
+
+sensor.set_windowing(roi)
+
+while True:
+    clock.tick()
+    img = sensor.snapshot()
+
+    for blob in img.find_blobs([yellow_threshold], pixels_threshold=5, area_threshold=3000):
+        if blob is not None:
+            approximate_angle = int((blob.cx() * FOV) / 320)
+
+            img.draw_rectangle(blob.rect())
+            img.draw_cross(blob.cx(), blob.cy())
+        else:
+            approximate_angle = 200
+
+    print(approximate_angle, clock.fps())
+    uart.write(bytes([255]))
+    uart.write(bytes([approximate_angle]))

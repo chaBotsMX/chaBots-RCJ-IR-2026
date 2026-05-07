@@ -5,7 +5,7 @@
 IRSensor ir;
 UART uart(Serial7, IRBoard{});
 
-#define IR_UPDATE_TIME 2500
+#define IR_UPDATE_TIME 1600
 
 int angle = 0;
 int distance = 0;
@@ -15,7 +15,7 @@ unsigned long timer = 0;
 void setup() {
   Serial.begin(115200);
   Serial.println("hi");
-  uart.begin(2000000);
+  uart.beginIR(2000000);
   delay(1000);
 }
 

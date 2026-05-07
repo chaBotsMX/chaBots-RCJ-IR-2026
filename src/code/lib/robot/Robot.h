@@ -21,38 +21,117 @@ class Robot {
         AttackerControl attacker;
         GoalkeeperControl goalkeeper;
 
-        MovementCommand atkCmd;
-        MovementCommand gkCmd;
+        MovementCommandAtk atkCmd;
+        MovementCommandGk gkCmd;
     
-        Robot() : pd(4, 0.1, 200) {
-            if(lineNeoOn){
-                pinMode(lineNeoPin, OUTPUT);
-                digitalWrite(lineNeoPin, HIGH);
-            }
+        Robot() : pd(4, 0.1, 100) {
+            pinMode(lineNeoPin, OUTPUT);
+            pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
         }
 
         float getLogicLipoVoltage(){
-            return analogRead(logicLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
+            return analogRead(logicLipoVoltagePin); //((analogRead(logicLipoVoltagePin) * 3.3) / 1023.0) * 2 ;
         }
 
         float getPowerLipoVoltage(){
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
         
-        void updateAttackerControl(int irAngle, int irDistance, int lineAngle){
-            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance);
+        void updateAttackerControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, bool gk){
+            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, gk);
         }
 
-        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle){
-            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance);
+        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){
+            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, yaw);
+        }
+
+        bool hasBall(int irAngle, int irDistance){
+            static unsigned long ballSeenSince = 0;
+            static bool tracking = false;
+
+            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 100); // Ball in front and close
+
+            if (currentBallState) {
+                if (!tracking) {
+                    ballSeenSince = millis();
+                    tracking = true;
+                }
+                if (millis() - ballSeenSince >= 80) {
+                    return true;
+                }
+            } else {
+                tracking = false;
+                ballSeenSince = 0;
+            }
+
+            return false;
+        }
+
+        void updateButtons(){
+            button1State = digitalRead(button1Pin);
+            button2State = digitalRead(button2Pin);
+
+            if (button1State && !lastButton1State) {
+                button1Toggle = !button1Toggle;
+                buzz(1000, 100);
+            }
+
+            if (button2State && !lastButton2State) {
+                button2Toggle = !button2Toggle;
+                buzz(1000, 100);
+            }
+
+            lastButton1State = button1State;
+            lastButton2State = button2State;
+        };
+        
+        void buzz(int freq, int time){
+            tone(buzzerPin, freq, time);
+        }
+
+        void setLineNeo(bool on){
+            digitalWrite(lineNeoPin, on ? HIGH : LOW);
+        }
+
+        bool wasButton1Pressed(){
+            return button1Toggle;
+        }
+
+        bool wasButton2Pressed(){
+            return button2Toggle;
+        }
+
+        int getYawCorrection(int cameraAngle, int irAngle, int irDistance){
+            float setpoint = 0; // Desired yaw angle (e.g., facing forward)
+            float currentYaw = imu.getYaw();
+            if(wasButton1Pressed()) setpoint = currentYaw;
+            float error = currentYaw - setpoint;
+            float offset = 0;
+            if(attacker.robotHasBall(irAngle, irDistance) and cameraAngle <= 140){
+                if(cameraAngle < 50) offset = 40; // Ball on left, turn slightly left
+                else if(cameraAngle > 90) offset = -40; // Ball on right, turn slightly right
+                else offset = 0;
+            };
+            return pd.getCorrection(error - offset);
         }
         
     private:
-        bool lineNeoOn = true;
         const int lineNeoPin = 23;
 
         const int logicLipoVoltagePin = 41;
         const int powerLipoVoltagePin = 26;
+
+        const int button1Pin = 30;
+        const int button2Pin = 27;
+
+        const int buzzerPin = 4;
+
+        bool lastButton1State = false;
+        bool lastButton2State = false;
+        bool button1State = false;
+        bool button2State = false;
+        bool button1Toggle = false;
+        bool button2Toggle = false;
 };
 
 #endif

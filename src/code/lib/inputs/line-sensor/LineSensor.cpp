@@ -18,7 +18,7 @@ void LineSensor::begin(){
   analogWrite(vref[0], 200);
   analogWrite(vref[1], 200);
   analogWrite(vref[2], 200);
-  analogWrite(vref[3], 200);
+  analogWrite(vref[3], 240);
 
   pixels.begin();
   pixels.clear();
@@ -33,14 +33,15 @@ void LineSensor::begin(){
 
 void LineSensor::update(){
   for(int i = 0; i < numSensors; i++){
+    if(i > 12 and i < 21){readings[i] == 0; continue;}
     readings[i] = digitalReadFast(comparators[i]);
   }
   calculateLineVector();
 }
 
 void LineSensor::calculateLineVector(){
-  double tempSumX = 0;
-  double tempSumY = 0;
+  double sumX = 0;
+  double sumY = 0;
   int sensorsReading = 0;
 
   for(int i = 0; i < numSensors; i++){
@@ -51,13 +52,8 @@ void LineSensor::calculateLineVector(){
     }
   }
 
-  if(sensorsReading == 0) {
-    angle = 500;
-    sumX = 0;
-    sumY = 0;
-  } else {
-    sumX = tempSumX;
-    sumY = tempSumY;
+  if(sensorsReading == 0) {angle = 500;}
+  else {
     double theta = degrees(atan2(sumY, sumX));
     if (theta < 0) theta+=360;
     angle = (int)theta;
@@ -80,12 +76,4 @@ void LineSensor::printLS(unsigned long timeLimit){
 
 int LineSensor::getAngle(){
   return angle/2;
-}
-
-float LineSensor::getLineVectorX(){
-  return sumX;
-}
-
-float LineSensor::getLineVectorY(){
-  return sumY;
 }

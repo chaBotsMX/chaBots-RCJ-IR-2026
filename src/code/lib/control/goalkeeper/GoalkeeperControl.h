@@ -21,7 +21,7 @@
 #include <Arduino.h>
 #include <math.h>
 
-struct MovementCommand {
+struct MovementCommandGk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
 };
@@ -37,9 +37,11 @@ class GoalkeeperControl {
      * @param irDistance: Distance from IR sensor
      * @return MovementCommand with angle and power
      */
-    MovementCommand calculateMovement( //recieves params, returns movement command function
+    MovementCommandGk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance
+      int irAngle, int irDistance,
+      int cameraAngle,
+      float yaw
     );
     
     // Tuning parameters
@@ -51,10 +53,10 @@ class GoalkeeperControl {
     
   private:
     // Tuning coefficients
-    float k_line = 1.0;                    // How strongly to follow the line
-    int power_limit = 160;                 // Max power to motors
-    float smoothing_alpha = 0.15;          // Exponential smoothing factor
-    int ball_far_threshold = 254;          // Distance above which ball is "far"
+    float k_line = 6.0;                    // How strongly to follow the line
+    int power_limit = 200;                 // Max power to motors
+    float smoothing_alpha = 0.3;          // Exponential smoothing factor
+    int ball_far_threshold = 230;          // Distance above which ball is "far"
     
     // State for exponential smoothing
     float smoothed_result_x = 0;
@@ -68,9 +70,13 @@ class GoalkeeperControl {
      */
     int determineBallSide(int lineAngle, int ballAngle);
     
-    int angleDifference(int angle1, int angle2);
+    float normalizeAngle(float angle);
 
     float magnitude(float x, float y);
+
+    int calculateApproximatePower(int irAngle, int lineAngle);
+
+    bool isRobotOnEdge(int parallel_angle);
 };
 
 #endif
