@@ -7,7 +7,7 @@
  * - Determines ball position relative to line
  * - Sums vectors to create smooth, continuous movement
  * 
- * @author LeoMc. / chaBotsMX
+ * @author LeoMc. && Alfonso De Anda / chaBotsMX
  * @date 2026-03-30
  */
 

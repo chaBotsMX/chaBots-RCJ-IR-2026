@@ -33,7 +33,6 @@ void setup() {
     Serial.println("imu not found");
   }
 
-  Serial.println("1");
 }
 
 void loop() {
