@@ -1,0 +1,17 @@
+### Altium ###
+**/__Previews/
+**/History/*
+Project Logs*/
+Project Outputs*/
+*.PcbDoc.htm
+**/*.ldb
+*.metadata
+*.PrjPcbStructure
+*.PrjMbdStructure
+
+# Force include main design files
+!*.PcbDoc
+!*.SchDoc
+!*.PrjPcb
+!*.SchLib
+!*.PcbLib
