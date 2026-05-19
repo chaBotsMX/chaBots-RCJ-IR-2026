@@ -14,29 +14,60 @@
 struct DataReceiver {
   uint8_t data[2];
   uint8_t expectedBytes;
-  uint8_t count;
-  bool waiting;
+  uint8_t requestByte;
+  uint32_t timeout;
   bool ready;
 
-  DataReceiver(uint8_t numBytes)
-    : expectedBytes(numBytes), count(0), waiting(true), ready(false) {}
+  DataReceiver(uint8_t numBytes, uint8_t request, uint32_t timeoutMs = 100)
+    : expectedBytes(numBytes), requestByte(request), timeout(timeoutMs), ready(false),
+      _state(IDLE), _count(0), _start(0) {}
 
-  void feed(uint8_t byte) {
+  void tick(HardwareSerial& serial) {
     ready = false;
 
-    if (waiting) {
-      if (byte == 255) waiting = false; //start to recieve data
-      return;
-    }
+    switch (_state) {
+      case IDLE:
+        while (serial.available()) {
+          // Flush stale data before issuing a new request
+          serial.read();
+        }
 
-    data[count++] = byte; //save data in array
+        serial.write(requestByte);
+        _count = 0;
+        _start = millis();
+        _state = RECEIVING;
+        break;
 
-    if (count == expectedBytes) {
-      ready = true;
-      count = 0;
-      waiting = true;
+      case RECEIVING:
+        // timeout check
+        if ((millis() - _start) > timeout) {
+          _state = IDLE;
+          break;
+        }
+
+        // read incoming data
+        while (serial.available() && _count < expectedBytes) {
+          _buf[_count++] = serial.read();
+        }
+
+        // save data if we have received the expected number of bytes
+        if (_count == expectedBytes) {
+          for (uint8_t i = 0; i < expectedBytes; i++) {
+            data[i] = _buf[i];
+          }
+          ready  = true;
+          _state = IDLE;
+        }
+        break;
     }
   }
+
+  private:
+    enum State : uint8_t { IDLE, RECEIVING };
+    State   _state;
+    uint8_t _count;
+    uint8_t _buf[2];
+    uint32_t _start;
 };
 
 #endif
