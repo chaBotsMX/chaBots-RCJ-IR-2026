@@ -16,7 +16,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println("hi");
   uart.beginIR(2000000);
-  delay(1000);
 }
 
 void loop() {
@@ -24,11 +23,8 @@ void loop() {
   
   ir.printIR(100); //print readings every 100ms
 
-  if(millis() > timer){
-    timer = millis() + 4;
-    angle = ir.getAngle();
-    distance = ir.getDistance();
+  angle = ir.getAngle();
+  distance = ir.getDistance();
 
-    uart.sendIR(angle/2, distance);
-  }
+  uart.sendIR(angle/2, distance);
 }

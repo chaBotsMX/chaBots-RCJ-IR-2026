@@ -69,7 +69,7 @@ class UART {
       }
     }
 
-    void handleIRRequest(uint8_t angle, uint8_t distance) {
+    void sendIR(uint8_t angle, uint8_t distance) {
       if (!_irSerial || !_irSerial->available()) return;
       uint8_t received = 0;
       while (_irSerial->available()) received = _irSerial->read(); // drain FIFO
@@ -80,7 +80,7 @@ class UART {
     }
 
     
-    void handleLineRequest(uint8_t angle) {
+    void sendLine(uint8_t angle) {
       if (!_lineSerial || !_lineSerial->available()) return;
       uint8_t received = 0;
       while (_lineSerial->available()) received = _lineSerial->read();
