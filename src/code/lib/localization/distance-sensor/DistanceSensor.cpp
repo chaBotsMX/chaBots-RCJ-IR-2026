@@ -1,6 +1,6 @@
 /**
  * @file DistanceSensor.cpp
- * @brief Asynchronous Pair-Firing execution engine and data filtering routines.
+ * @brief URM09 Distance Sensor I2C Interface Implementation
  * @author Alfonso De Anda / chaBotsMX
  * @date 05/19/26
  */
