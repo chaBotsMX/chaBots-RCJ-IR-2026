@@ -10,7 +10,7 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle, bool gk) {
+MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
     MovementCommandAtk cmd;
   
     if(lineAngle <= 360) {

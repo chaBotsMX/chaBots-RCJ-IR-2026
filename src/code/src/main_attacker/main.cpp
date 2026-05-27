@@ -50,16 +50,16 @@ void loop() {
     robot.updateButtons();
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
-    //Serial.print("IR Distance: ");Serial.println(irDistance);
-    Serial.print("Line Angle: ");Serial.println(lineAngle);
+    Serial.print("IR Distance: ");Serial.println(irDistance);
+    //Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
-    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
   }
 
-  if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle, irDistance);
+  if(robot.imu.update()) yawCorrection = robot.getYawCorrection();
 
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(irAngle, irDistance, lineAngle, cameraAngle, false);
+    robot.updateAttackerControl(irAngle, irDistance, lineAngle);
 
     robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 

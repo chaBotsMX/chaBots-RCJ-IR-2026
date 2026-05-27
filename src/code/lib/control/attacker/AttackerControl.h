@@ -30,12 +30,8 @@ class AttackerControl {
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance,
-      int cameraAngle,
-      bool gk
+      int irAngle, int irDistance
     );
-
-    float getAngularOffset(int cameraAngle);
 
     bool isBallOnFront(int irAngle);
 
