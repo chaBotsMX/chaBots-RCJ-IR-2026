@@ -5,17 +5,17 @@ from pyb import UART
 
 TARGET = "YELLOW"
 
-YELLOW_THRESHOLD = (50, 100, 11, 127, 39, 127)
+YELLOW_THRESHOLD = (49, 100, -128, 127, 41, 127)
 BLUE_THRESHOLD = (0, 32, -2, 23, -128, 0)
-
-IMG_CX = 160
 
 ROI = (0, 80, 320, 80)
 
 FOV = 140
+DEGREES_IN_PIXEL = 0.4375
 
 # Calibration points: (top_y_pixel, distance_in_cm)
-# CRITICAL: Keep this list sorted from LOWEST top_y to HIGHEST top_y
+# Keep this list sorted from LOWEST top_y to HIGHEST top_y
+# needs to calibrate
 CALIBRATION_POINTS = [
     (0, 0),
     (0, 0),
@@ -24,25 +24,36 @@ CALIBRATION_POINTS = [
     (0, 0)
 ]
 
+#init sensor
+
 sensor.reset()
+sensor.set_pixformat(sensor.RGB565)
+sensor.set_framesize(sensor.QVGA)
+
+sensor.set_auto_gain(True)
+sensor.set_auto_whitebal(True)
+sensor.set_auto_exposure(True)
 
 sensor.set_contrast(0)
 sensor.set_brightness(0)
 sensor.set_saturation(0)
-
-sensor.set_auto_gain(False)
 sensor.set_auto_rotation(False)
 
-sensor.set_pixformat(sensor.RGB565)
-sensor.set_framesize(sensor.QVGA)
-
 sensor.skip_frames(time=2000)
+
+sensor.set_auto_gain(False)
+sensor.set_auto_whitebal(False)
+sensor.set_auto_exposure(False)
+
+sensor.set_windowing(ROI)
 
 clock = time.clock()
 
 uart = UART(3, 115200, timeout_char=0)
 
-sensor.set_windowing(ROI)
+angle = 254
+distance = 254
+confidence = 254
 
 def estimate_distance(blob_y):
     if blob_y <= CALIBRATION_POINTS[0][0]:
@@ -71,19 +82,19 @@ def process_goal(blobs):
     if largest_blob.pixels() < 150:
         return None
 
-    angle = int((largest_blob.cx() - 160) * (FOV / 320))
+    angle = int((largest_blob.cx() - 160) * (DEGREES_IN_PIXEL))
     distance = estimate_distance(largest_blob.y())
 
     aspect_ratio = largest_blob.w() / largest_blob.h()
-    confidence = (aspect_ratio * 100) / 2.5
+    confidence = int((aspect_ratio * 100) / 2.5)
 
-    return (angle, distance, confidence)
+    return (angle, distance, confidence, aspect_ratio, largest_blob.y())
 
 while True:
     clock.tick()
     img = sensor.snapshot()
 
-    img.lens_corr(strenght=1.8)
+    img.lens_corr(strength = 1.8)
 
     yellow_blobs = img.find_blobs([YELLOW_THRESHOLD], pixels_threshold=100, merge=True)
     blue_blobs   = img.find_blobs([BLUE_THRESHOLD], pixels_threshold=100, merge=True)
@@ -91,20 +102,20 @@ while True:
     yellow_goal = process_goal(yellow_blobs)
     blue_goal = process_goal(blue_blobs)
 
-    angle = 254
-    distance = 254
-    confidence = 254
-
     if TARGET == "YELLOW" and yellow_goal:
         angle = yellow_goal[0]
         distance = yellow_goal[1]
         confidence = yellow_goal[2]
-        img.draw_rectangle(yellow_blobs.rect(), color=(255, 255, 0))
+        img.draw_rectangle(yellow_blobs[0].rect())
     elif TARGET == "BLUE" and blue_goal:
         angle = blue_goal[0]
         distance = blue_goal[1]
         confidence = blue_goal[2]
-        img.draw_rectangle(blue_blobs.rect(), color=(0, 0, 255))
+        img.draw_rectangle(blue_blobs[0].rect())
+    else:
+        angle = 254
+        distance = 254
+        confidence = 254
 
     received = 0
     while uart.any():
@@ -112,10 +123,9 @@ while True:
         # indexing [0] converts it to an integer (0-255)
         received = uart.read(1)[0]
 
-        # 3. Check if the trigger byte (255) was received
-        if received == 255:
-            uart.write(bytes([angle]))
-            uart.write(bytes([distance]))
-            uart.write(bytes([confidence]))
+    if received == 255:
+        uart.write(bytes([angle + 70]))
+        uart.write(bytes([distance]))
+        uart.write(bytes([confidence]))
 
-    print(yellow_goal, blue_goal, clock.fps())
+    print(yellow_goal, clock.fps())
