@@ -3,50 +3,129 @@
 import sensor, time
 from pyb import UART
 
-sensor.set_contrast(0)
-sensor.set_brightness(3)
-sensor.set_saturation(0)
+TARGET = "BLUE"
 
-sensor.set_auto_gain(False, gain_db=30)  # Fixed gain
-sensor.set_auto_rotation(False)
+YELLOW_THRESHOLD = (49, 100, -128, 127, 41, 127)
+BLUE_THRESHOLD = (0, 32, -2, 23, -128, 0)
+
+ROI = (0, 80, 320, 80)
+
+FOV = 140
+DEGREES_IN_PIXEL = 0.4375
+
+# Calibration points: (top_y_pixel, distance_in_cm)
+# Keep this list sorted from LOWEST top_y to HIGHEST top_y
+# needs to calibrate
+CALIBRATION_POINTS = [
+    (0, 0),
+    (0, 0),
+    (0, 0),
+    (0, 0),
+    (0, 0)
+]
+
+#init sensor
 
 sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
 
+sensor.set_auto_gain(True)
+sensor.set_auto_whitebal(True)
+sensor.set_auto_exposure(True)
+
+sensor.set_contrast(0)
+sensor.set_brightness(0)
+sensor.set_saturation(0)
+sensor.set_auto_rotation(False)
+
 sensor.skip_frames(time=2000)
+
+sensor.set_auto_gain(False)
+sensor.set_auto_whitebal(False)
+sensor.set_auto_exposure(False)
+
+sensor.set_windowing(ROI)
 
 clock = time.clock()
 
-yellow_threshold = (50, 100, 11, 127, 39, 127)
-#yellow_threshold = (41, 100, -7, 127, 30, 127) #hotel
-blue_threshold = (0, 32, -2, 23, -128, 0)
-
-goal_threshold = blue_threshold
-
-roi = (0, 60, 320, 80)
-
-FOV = 140
-
-approximate_angle = 200
-
 uart = UART(3, 115200, timeout_char=0)
 
-sensor.set_windowing(roi)
+angle = 254
+distance = 254
+confidence = 254
+
+def estimate_distance(blob_y):
+    if blob_y <= CALIBRATION_POINTS[0][0]:
+        return CALIBRATION_POINTS[0][1]
+    if blob_y >= CALIBRATION_POINTS[-1][0]:
+        return CALIBRATION_POINTS[-1][1]
+
+    for i in range(len(CALIBRATION_POINTS) - 1):
+        y0, d0 = CALIBRATION_POINTS[i]
+        y1, d1 = CALIBRATION_POINTS[i+1]
+
+        if y0 <= blob_y <= y1:
+            # Linear Interpolation Formula
+            # Determines the percentage of progress between y0 and y1
+            fraction = (blob_y - y0) / (y1 - y0)
+            # Apply that percentage to the distance gap
+            interpolated_distance = d0 + fraction * (d1 - d0)
+            return interpolated_distance
+
+def process_goal(blobs):
+    if not blobs:
+        return None
+
+    largest_blob = max(blobs, key=lambda b: b.pixels())
+
+    if largest_blob.pixels() < 150:
+        return None
+
+    angle = int((largest_blob.cx() - 160) * (DEGREES_IN_PIXEL))
+    distance = estimate_distance(largest_blob.y())
+
+    aspect_ratio = largest_blob.w() / largest_blob.h()
+    confidence = int((aspect_ratio * 100) / 2.5)
+
+    return (angle, distance, confidence, aspect_ratio, largest_blob.y())
 
 while True:
     clock.tick()
     img = sensor.snapshot()
 
-    for blob in img.find_blobs([yellow_threshold], pixels_threshold=5, area_threshold=2000):
-        if blob is not None:
-            approximate_angle = int((blob.cx() * FOV) / 320)
+    img.lens_corr(strength = 1.8)
 
-            img.draw_rectangle(blob.rect())
-            img.draw_cross(blob.cx(), blob.cy())
-        else:
-            approximate_angle = 200
+    yellow_blobs = img.find_blobs([YELLOW_THRESHOLD], pixels_threshold=100, merge=True)
+    blue_blobs   = img.find_blobs([BLUE_THRESHOLD], pixels_threshold=100, merge=True)
 
-    print(approximate_angle, clock.fps())
-    uart.write(bytes([255]))
-    uart.write(bytes([approximate_angle]))
+    yellow_goal = process_goal(yellow_blobs)
+    blue_goal = process_goal(blue_blobs)
+
+    if TARGET == "YELLOW" and yellow_goal:
+        angle = yellow_goal[0]
+        distance = yellow_goal[1]
+        confidence = yellow_goal[2]
+        img.draw_rectangle(yellow_blobs[0].rect())
+    elif TARGET == "BLUE" and blue_goal:
+        angle = blue_goal[0]
+        distance = blue_goal[1]
+        confidence = blue_goal[2]
+        img.draw_rectangle(blue_blobs[0].rect())
+    else:
+        angle = 254
+        distance = 254
+        confidence = 254
+
+    received = 0
+    while uart.any():
+        # read(1) gets 1 byte as a bytes object (e.g., b'\xff')
+        # indexing [0] converts it to an integer (0-255)
+        received = uart.read(1)[0]
+
+    if received == 255:
+        uart.write(bytes([angle + 70]))
+        uart.write(bytes([distance]))
+        uart.write(bytes([confidence]))
+
+    print(yellow_goal, clock.fps())
