@@ -37,8 +37,8 @@ class Robot {
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
         
-        void updateAttackerControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, bool gk){
-            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, gk);
+        void updateAttackerControl(int irAngle, int irDistance, int lineAngle){
+            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance);
         }
 
         void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){
@@ -101,18 +101,12 @@ class Robot {
             return button2Toggle;
         }
 
-        int getYawCorrection(int cameraAngle, int irAngle, int irDistance){
+        int getYawCorrection(){
             float setpoint = 0; // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
             if(wasButton1Pressed()) setpoint = currentYaw;
             float error = currentYaw - setpoint;
-            float offset = 0;
-            if(attacker.robotHasBall(irAngle, irDistance) and cameraAngle <= 140){
-                if(cameraAngle < 50) offset = 40; // Ball on left, turn slightly left
-                else if(cameraAngle > 90) offset = -40; // Ball on right, turn slightly right
-                else offset = 0;
-            };
-            return pd.getCorrection(error - offset);
+            return pd.getCorrection(error);
         }
         
     private:

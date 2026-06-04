@@ -30,12 +30,8 @@ class AttackerControl {
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int lineAngle,
-      int irAngle, int irDistance,
-      int cameraAngle,
-      bool gk
+      int irAngle, int irDistance
     );
-
-    float getAngularOffset(int cameraAngle);
 
     bool isBallOnFront(int irAngle);
 
@@ -44,10 +40,16 @@ class AttackerControl {
     LineAvoiding line;
     
   private:
-    bool ballDetected(int irAngle);
-    int adjustBallAngleClose(int irAngle);
-    bool isBallClose(int irDistance);
-    int calculateOrbitPower(int irAngle, int irDistance);
+    const int kIRDistanceOffset = 0; //
+    const int kAvoidDistance = 0; //
+
+    const int maxPower = 200;
+    const int minPower = 50;
+
+    const float kPowerP = 0.1;
+
+    int getBallChasingAngle(int irAngle, int irDistance);
+    int getBallChasingPower(int irDistance);
 };
 
 #endif
