@@ -22,9 +22,9 @@ class UART {
     int lineAngle = 500;
     int cameraAngle = 200;
 
-    DataReceiver irReceiver   = DataReceiver(2); //angle and distance
-    DataReceiver lineReceiver = DataReceiver(1); // angle
-    DataReceiver cameraReceiver = DataReceiver(1); // approximate angle
+    DataReceiver irReceiver   = DataReceiver(2, 255, 100); //angle and distance
+    DataReceiver lineReceiver = DataReceiver(1, 255, 100); // angle
+    DataReceiver cameraReceiver = DataReceiver(1, 255, 100); // approximate angle
 
     //main
     UART(HardwareSerial& irPort, HardwareSerial& linePort, HardwareSerial& cameraPort)
@@ -32,11 +32,11 @@ class UART {
 
     //ir
     UART(HardwareSerial& port, IRBoard)
-      : _irSerial(&port), _lineSerial(nullptr) {}
+      : _irSerial(&port), _lineSerial(nullptr), _cameraSerial(nullptr) {}
 
     //line
     UART(HardwareSerial& port, LineBoard)
-      : _irSerial(nullptr), _lineSerial(&port) {}
+      : _irSerial(nullptr), _lineSerial(&port), _cameraSerial(nullptr) {}
 
     void beginIR(long baud) {
       if(_irSerial) _irSerial->begin(baud);
@@ -51,40 +51,42 @@ class UART {
     }
 
     void receive() {
-      while (_irSerial->available()) {
-        irReceiver.feed(_irSerial->read());
-        if (irReceiver.ready) {
-          irAngle = irReceiver.data[0];
-          irDistance = irReceiver.data[1];
-        }
+      if(_irSerial) irReceiver.tick(*_irSerial);
+      if(_lineSerial) lineReceiver.tick(*_lineSerial);
+      if(_cameraSerial) cameraReceiver.tick(*_cameraSerial);
+
+      if (irReceiver.ready) {
+        irAngle = irReceiver.data[0];
+        irDistance = irReceiver.data[1];
       }
 
-      while (_lineSerial->available()) {
-        lineReceiver.feed(_lineSerial->read());
-        if (lineReceiver.ready) {
-          lineAngle = lineReceiver.data[0];
-        }
+      if (lineReceiver.ready) {
+        lineAngle = lineReceiver.data[0];
       }
 
-      while(_cameraSerial->available()) {
-        cameraReceiver.feed(_cameraSerial->read());
-        if (cameraReceiver.ready) {
-          cameraAngle = cameraReceiver.data[0];
-        }
+      if (cameraReceiver.ready) {
+        cameraAngle = cameraReceiver.data[0];
       }
     }
 
     void sendIR(uint8_t angle, uint8_t distance) {
-      if(_irSerial == nullptr) return;
-      _irSerial->write(255);
-      _irSerial->write(angle);
-      _irSerial->write(distance);
+      if (!_irSerial || !_irSerial->available()) return;
+      uint8_t received = 0;
+      while (_irSerial->available()) received = _irSerial->read(); // drain FIFO
+      if (received == 255) {
+        _irSerial->write(angle);
+        _irSerial->write(distance);
+      }
     }
 
+    
     void sendLine(uint8_t angle) {
-      if(_lineSerial == nullptr) return;
-      _lineSerial->write(255);
-      _lineSerial->write(angle);
+      if (!_lineSerial || !_lineSerial->available()) return;
+      uint8_t received = 0;
+      while (_lineSerial->available()) received = _lineSerial->read();
+      if (received == 255) {
+        _lineSerial->write(angle);
+      }
     }
 
   private:

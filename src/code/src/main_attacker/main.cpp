@@ -27,8 +27,6 @@ void setup() {
   Serial.print("Logic Lipo Voltage: "); Serial.println(robot.getLogicLipoVoltage());
   Serial.print("Power Lipo Voltage: "); Serial.println(robot.getPowerLipoVoltage());
 
-  delay(1000);
-
   if (!robot.imu.begin(Serial7)) {
     Serial.println("imu not found");
   }
@@ -53,7 +51,7 @@ void loop() {
     //Serial.print("IR Distance: ");Serial.println(irDistance);
     Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
-    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
   }
 
   if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle, irDistance);
