@@ -10,11 +10,11 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance) {
+MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int pastLineAngle, int irAngle, int irDistance) {
     MovementCommandAtk cmd;
   
-    if(lineAngle <= 360) {
-        cmd.angle = line.getAvoidLineAngle(lineAngle);
+    if(line.lineDetected(currentLineAngle) && line.lineDetected(pastLineAngle)) {
+        cmd.angle = line.getAvoidLineAngle(currentLineAngle, pastLineAngle);
         cmd.power = 100; // Line detected
     }
     else if(irAngle <= 360) {
@@ -53,10 +53,10 @@ int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) 
     if(irAngle > 360 || irAngle < 0){
         return 500;  // Invalid angle
     }
-            
+    
     if(isBallOnFront(irAngle, irDistance)) return 90; // Ball is close, go straight
     
-    if(irDistance > 13) return irAngle;
+    if(irDistance > 14) return irAngle;
     
     // Right side
     if(irAngle > 270 || irAngle < 80){
@@ -84,7 +84,7 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
 }
 
 bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
-    if((irAngle >= 75 and irAngle <= 105) and irDistance == 0) return true;
+    if((irAngle >= 50 and irAngle <= 130) and irDistance == 0) return true;
     return false;
 }
 

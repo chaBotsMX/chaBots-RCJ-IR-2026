@@ -10,6 +10,7 @@ int angle = 0;
 unsigned long timer;
 
 void setup() {
+  delay(200);
   Serial.begin(115200);
   ls.begin();
   uart.beginLine(2000000);

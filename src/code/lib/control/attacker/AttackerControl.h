@@ -29,7 +29,7 @@ class AttackerControl {
      * @return MovementCommand with angle and power
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
-      int lineAngle,
+      int currentLineAngle, int pastLineAngle,
       int irAngle, int irDistance
     );
 

@@ -13,7 +13,7 @@ int distance = 0;
 unsigned long timer = 0;
 
 void setup() {
-  delay(100);
+  delay(200);
 
   Serial.begin(115200);
   Serial.println("hi");

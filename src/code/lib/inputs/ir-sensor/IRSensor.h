@@ -9,7 +9,7 @@
 #define IRSensor_H
 
 #define numTSSP 16
-#define numPhotodiodes 3
+#define numPhotodiodes 1
 #define bufferSize 60
 
 #include <Arduino.h>
@@ -35,7 +35,7 @@ class IRSensor {
   private:
     //constants
     const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
-    const int photodiodes[numPhotodiodes] = {39, 38, 27};
+    const int photodiodes[numPhotodiodes] = {39/* , 38, 27 */};
     const int neoPin = 11;
     Adafruit_NeoPixel pixels;
 

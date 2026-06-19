@@ -169,7 +169,7 @@ int IRSensor::getTSSPDetecting(){
 
 int IRSensor::getRelativeDistance(){
   int distance = getDistance();
-  if(distance < 120) return 0;
+  if(distance < 160) return 0;
   return 16 - tsspDetecting;
 }
 
@@ -186,7 +186,7 @@ void IRSensor::printIR(unsigned long timeLimit){
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
     Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print(' ');
-    //Serial.print("distance: "); Serial.print(getDistance()); Serial.print(' ');
+    Serial.print("distance: "); Serial.print(getDistance()); Serial.print(' ');
     //Serial.print("intensity: "); Serial.print(intensity); Serial.println();
     //Serial.print("photodiode readings"); Serial.print(photodiodeReadings[0]); Serial.print(' ');
     //Serial.print(photodiodeReadings[1]); Serial.print(' ');

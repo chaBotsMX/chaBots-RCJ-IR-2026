@@ -12,6 +12,7 @@ int yawCorrection = 0;
 int irAngle = 500;
 int irDistance = 254;
 int lineAngle = 500;
+int pastLineAngle = 500;
 int cameraAngle = 200;
 
 float angularOffset = 0;
@@ -35,7 +36,7 @@ void setup() {
 
 void loop() {
   uart.receiveIR();
-  //uart.receiveLine();
+  uart.receiveLine();
   robot.kicker.update();
 
   irAngle = uart.irAngle*2;
@@ -50,7 +51,7 @@ void loop() {
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
     Serial.print("IR Distance: ");Serial.println(irDistance);
-    //Serial.print("Line Angle: ");Serial.println(lineAngle);
+    Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
     //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
   }
@@ -58,7 +59,7 @@ void loop() {
   if(robot.imu.update()) yawCorrection = robot.getYawCorrection();
 
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(irAngle, irDistance, lineAngle);
+    robot.updateAttackerControl(lineAngle, pastLineAngle, irAngle, irDistance);
 
     robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 
@@ -68,4 +69,6 @@ void loop() {
   } else{
     robot.drive.writeAllMotorsOutput(0);
   }
+
+  pastLineAngle = lineAngle;
 }
