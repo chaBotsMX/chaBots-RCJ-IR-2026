@@ -8,10 +8,12 @@
 #ifndef IRSensor_H
 #define IRSensor_H
 
-#define numSensors 16
+#define numTSSP 16
+#define numPhotodiodes 3
 #define bufferSize 60
 
 #include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
 
 class IRSensor {
   public:
@@ -25,15 +27,19 @@ class IRSensor {
 
     int getAngle();
     int getDistance();
+    int getTSSPDetecting();
     float getBallVectorX();
     float getBallVectorY();
+    int getRelativeDistance();
 
   private:
     //constants
-    const int tssp[numSensors] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
-    const int photodiodes[numSensors] = {39, 38, 40, 41, 16, 17, 18, 19, 22, 23, 21, 20, 24, 25, 26, 27};
+    const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
+    const int photodiodes[numPhotodiodes] = {39, 38, 27};
+    const int neoPin = 11;
+    Adafruit_NeoPixel pixels;
 
-    const float vectorX[numSensors] = {
+    const float vectorX[numTSSP] = {
       0.0000000000,   // Index 0:  cos(90°)
       0.3826834324,   // Index 1:  cos(67.5°)
       0.7071067812,   // Index 2:  cos(45°)
@@ -52,7 +58,7 @@ class IRSensor {
       -0.3826834324   // Index 15: cos(-247.5°)
     };
 
-    const float vectorY[numSensors] = {
+    const float vectorY[numTSSP] = {
       1.0000000000,   // Index 0:  sin(90°)
       0.9238795325,   // Index 1:  sin(67.5°)
       0.7071067812,   // Index 2:  sin(45°)
@@ -71,38 +77,20 @@ class IRSensor {
       0.9238795325    // Index 15: sin(-247.5°)
     };
 
-    const float referenceReadings[numSensors] = {
-      1093, // sensor 0 
-      1192,    // sensor 1
-      1020,    // sensor 2
-      1038,   // sensor 3
-      1075,  // sensor 4 
-      1600,  // sensor 5
-      1406,    // sensor 6
-      934,  // sensor 7
-      1075, // sensor 8
-      675,  // sensor 9
-      865,    // sensor 10
-      1758,  // sensor 11
-      1500, // sensor 12
-      1211,  // sensor 13
-      1506,    // sensor 14
-      1360   // sensor 15
-    };
-
     //variables and locals
     int rawAngle = 500;
     int intensity = 5000;
 
-    bool tsspDetected[numSensors][bufferSize]; //matrix with tssp states over time
-    int photodiodeReadings[numSensors];
+    int tsspDetecting = 0;
+
+    bool tsspDetected[numTSSP][bufferSize]; //matrix with tssp states over time
+    int photodiodeReadings[numPhotodiodes];
     int bufferIndex = 0;
-    int tsspTimesDetected[numSensors];
-    float photodiodeGains[numSensors];
+    int tsspTimesDetected[numTSSP];
 
     float filteredX = 0;
     float filteredY = 0;
-    float filterAlpha = 0.1; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
+    float filterAlpha = 0.3; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
     float ballVectorX = 0;
     float ballVectorY = 0;

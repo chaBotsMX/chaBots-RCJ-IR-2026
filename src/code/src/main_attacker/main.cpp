@@ -27,14 +27,15 @@ void setup() {
   Serial.print("Logic Lipo Voltage: "); Serial.println(robot.getLogicLipoVoltage());
   Serial.print("Power Lipo Voltage: "); Serial.println(robot.getPowerLipoVoltage());
 
-  if (!robot.imu.begin(Serial7)) {
+  if (!robot.imu.begin(Serial4)) {
     Serial.println("imu not found");
   }
 
 }
 
 void loop() {
-  uart.receive();
+  uart.receiveIR();
+  //uart.receiveLine();
   robot.kicker.update();
 
   irAngle = uart.irAngle*2;

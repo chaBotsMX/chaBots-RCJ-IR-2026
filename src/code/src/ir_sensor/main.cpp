@@ -13,6 +13,8 @@ int distance = 0;
 unsigned long timer = 0;
 
 void setup() {
+  delay(100);
+
   Serial.begin(115200);
   Serial.println("hi");
   uart.beginIR(2000000);
@@ -24,7 +26,7 @@ void loop() {
   ir.printIR(100); //print readings every 100ms
 
   angle = ir.getAngle();
-  distance = ir.getDistance();
+  distance = ir.getRelativeDistance();
 
   uart.sendIR(angle/2, distance);
 }

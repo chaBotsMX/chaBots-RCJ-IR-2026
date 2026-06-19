@@ -50,20 +50,24 @@ class UART {
       if(_cameraSerial) _cameraSerial->begin(baud);
     }
 
-    void receive() {
+    void receiveIR() {
       if(_irSerial) irReceiver.tick(*_irSerial);
-      if(_lineSerial) lineReceiver.tick(*_lineSerial);
-      if(_cameraSerial) cameraReceiver.tick(*_cameraSerial);
 
       if (irReceiver.ready) {
         irAngle = irReceiver.data[0];
         irDistance = irReceiver.data[1];
       }
+    }
 
+    void receiveLine() {
+      if(_lineSerial) lineReceiver.tick(*_lineSerial);
       if (lineReceiver.ready) {
         lineAngle = lineReceiver.data[0];
       }
+    }
 
+     void receiveCamera() {
+      if(_cameraSerial) cameraReceiver.tick(*_cameraSerial);
       if (cameraReceiver.ready) {
         cameraAngle = cameraReceiver.data[0];
       }

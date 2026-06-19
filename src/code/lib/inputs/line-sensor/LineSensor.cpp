@@ -24,9 +24,10 @@ void LineSensor::begin(){
   pixels.clear();
 
   for(int i = 0; i < numSensors; i++){
+    if(i%2 == 0) continue;
     unsigned long start = millis();
     while(millis() - start < 20){}
-    pixels.setPixelColor(i, pixels.Color(250, 0, 0));
+    pixels.setPixelColor(i, pixels.Color(100, 100, 100));
     pixels.show();
   }
 }

@@ -33,7 +33,7 @@ class AttackerControl {
       int irAngle, int irDistance
     );
 
-    bool isBallOnFront(int irAngle);
+    bool isBallOnFront(int irAngle, int irDistance);
 
     bool robotHasBall(int irAngle, int irDistance);
 
@@ -43,13 +43,14 @@ class AttackerControl {
     const int kIRDistanceOffset = 0; //
     const int kAvoidDistance = 0; //
 
-    const int maxPower = 200;
+    const int maxPower = 180;
     const int minPower = 50;
 
     const float kPowerP = 0.1;
 
     int getBallChasingAngle(int irAngle, int irDistance);
-    int getBallChasingPower(int irDistance);
+    int getBallChasingAngleNoDistance(int irAngle, int irDistance);
+    int getBallChasingPower(int irAngle, int irDistance);
 };
 
 #endif

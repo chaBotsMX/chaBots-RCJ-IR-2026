@@ -18,8 +18,8 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
         cmd.power = 100; // Line detected
     }
     else if(irAngle <= 360) {
-        cmd.angle = getBallChasingAngle(irAngle, irDistance);
-        cmd.power = getBallChasingPower(irDistance);
+        cmd.angle = getBallChasingAngleNoDistance(irAngle, irDistance);
+        cmd.power = getBallChasingPower(irAngle, irDistance);
     }
     else {
         cmd.angle = 0;
@@ -30,7 +30,7 @@ MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle
 }
 
 int AttackerControl::getBallChasingAngle(int irAngle, int irDistance) {
-    if(isBallOnFront(irAngle)) return 0; // Ball is close, go straight
+    if(isBallOnFront(irAngle, irDistance)) return 0; // Ball is close, go straight
     int xBall = irDistance * cos(radians(irAngle));
     int yBall = irDistance * sin(radians(irAngle));
 
@@ -49,16 +49,46 @@ int AttackerControl::getBallChasingAngle(int irAngle, int irDistance) {
     return (int)degrees(atan2(yBall - kIRDistanceOffset, xBall));
 }
 
-int AttackerControl::getBallChasingPower(int irDistance) {
-    if(isBallOnFront(irDistance)) return maxPower; // Ball is close, full power
-    return max(minPower, min(maxPower, minPower + (int)(irDistance * kPowerP)));
+int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) {
+    if(irAngle > 360 || irAngle < 0){
+        return 500;  // Invalid angle
+    }
+            
+    if(isBallOnFront(irAngle, irDistance)) return 90; // Ball is close, go straight
+    
+    if(irDistance > 13) return irAngle;
+    
+    // Right side
+    if(irAngle > 270 || irAngle < 80){
+        int adjusted = irAngle - 90;
+        // Fix negative modulo
+        if(adjusted < 0) adjusted += 360;
+        return adjusted;
+    }
+    // Left side
+    else if(irAngle > 100 && irAngle < 270){
+        int adjusted = irAngle + 90;
+        // Handle wrap-around
+        if(adjusted >= 360) adjusted -= 360;
+        return adjusted;
+    }
+    else{
+        return 90; // Ball is directly in front, go straight
+    }
 }
 
-bool AttackerControl::isBallOnFront(int irAngle) {
-    return (irAngle >= 80 && irAngle <= 100);
+int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+    if(isBallOnFront(irAngle, irDistance)) return maxPower; // Ball is close, full power
+    return (minPower + maxPower) / 2;
+    //return max(minPower, min(maxPower, minPower + (int)(irDistance * kPowerP)));
+}
+
+bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
+    if((irAngle >= 75 and irAngle <= 105) and irDistance == 0) return true;
+    return false;
 }
 
 bool AttackerControl::robotHasBall(int irAngle, int irDistance){
-    if((irAngle >= 80 and irAngle <= 100) and irDistance < 140) return true;
+    if((irAngle >= 80 and irAngle <= 100) and irDistance == 0) return true;
     return false;
 }

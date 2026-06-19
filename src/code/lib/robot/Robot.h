@@ -49,7 +49,7 @@ class Robot {
             static unsigned long ballSeenSince = 0;
             static bool tracking = false;
 
-            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 100); // Ball in front and close
+            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 150); // Ball in front and close
 
             if (currentBallState) {
                 if (!tracking) {
@@ -115,8 +115,8 @@ class Robot {
         const int logicLipoVoltagePin = 41;
         const int powerLipoVoltagePin = 26;
 
-        const int button1Pin = 30;
-        const int button2Pin = 27;
+        const int button1Pin = 32;
+        const int button2Pin = 33;
 
         const int buzzerPin = 4;
 
