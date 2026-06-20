@@ -74,7 +74,7 @@ void IRSensor::updateSensors(){
 
 void IRSensor::updatePhotodiodes(){
   for(int i = 0; i < numPhotodiodes; i++){
-    int currentDetection = max(analogRead(photodiodes[i]) - 215, 0);
+    int currentDetection = /* analogRead(photodiodes[i]); */ min(max(analogRead(photodiodes[i]) - minPhotiodeReading, 0), maxPhotiodeReading);
     photodiodeReadings[i] = currentDetection;
   }
 }
@@ -99,7 +99,8 @@ bool IRSensor::isBallClose(){
 }
 
 void IRSensor::calculateBallVector(){
-  float sumX = 0, sumY = 0;
+  float tsspVectorSumX = 0, tsspVectorSumY = 0;
+  float photoVectorX = 0, photoVectorY = 0;
   int sensorsReading = 0;
   int peakReading = 0;
 
@@ -122,34 +123,42 @@ void IRSensor::calculateBallVector(){
 
     for(int i = 0; i < numTSSP; i++){
       if(tsspTimesDetected[i] > threshold and threshold > 0){
-        sumX += tsspTimesDetected[i] * vectorX[i];
-        sumY += tsspTimesDetected[i] * vectorY[i];
+        tsspVectorSumX += tsspTimesDetected[i] * vectorX[i];
+        tsspVectorSumY += tsspTimesDetected[i] * vectorY[i];
         sensorsReading++;
       }
     }
-  }
-  
-  tsspDetecting = (0.5 * sensorsReading) + ((1.0 - 0.5) * tsspDetecting);
-  if(sensorsReading == 0){ rawAngle = 500; smoothAngle = 500; intensity = 0;}
-  else{
-    double theta = degrees(atan2(sumY, sumX));
-    if (theta < 0) theta+=360;
-    rawAngle = (int)theta;
 
-    // Apply Linear Filter to the VECTORS
-    filteredX = (sumX * filterAlpha) + (filteredX * (1.0 - filterAlpha));
-    filteredY = (sumY * filterAlpha) + (filteredY * (1.0 - filterAlpha));
-
-    // Calculate the Smooth Angle from the filtered vectors
-    double smoothTheta = degrees(atan2(filteredY, filteredX));
-    if (smoothTheta < 0) smoothTheta += 360;
-    smoothAngle = (int)smoothTheta;
-
-    if(arePhotodiodesDetecting()){
-      for(int i = 0; i < numPhotodiodes; i++){
-        if(photodiodeReadings[i] > peakReading) peakReading = photodiodeReadings[i];
+    for(int i = 0; i < numPhotodiodes; i++){
+      if(photodiodeReadings[i] > 5){ // Only consider photodiodes with a reading above 5 to reduce noise
+        photoVectorX += photodiodeReadings[i] * vectorX[i];
+        photoVectorY += photodiodeReadings[i] * vectorY[i];
       }
-      intensity = peakReading; //sqrt((filteredX * filteredX) + (filteredY * filteredY));
+    }
+
+    tsspDetecting = (0.5 * sensorsReading) + ((1.0 - 0.5) * tsspDetecting);
+    if(sensorsReading == 0){ rawAngle = 500; smoothAngle = 500; intensity = 0; distance = 255; filteredDistance = 255; }
+    else{
+      double theta = degrees(atan2(tsspVectorSumY, tsspVectorSumX));
+      if (theta < 0) theta+=360;
+      rawAngle = (int)theta;
+
+      // Apply Linear Filter to the VECTORS
+      filteredX = (tsspVectorSumX * filterAlpha) + (filteredX * (1.0 - filterAlpha));
+      filteredY = (tsspVectorSumY * filterAlpha) + (filteredY * (1.0 - filterAlpha));
+
+      // Calculate the Smooth Angle from the filtered vectors
+      double smoothTheta = degrees(atan2(filteredY, filteredX));
+      if (smoothTheta < 0) smoothTheta += 360;
+      smoothAngle = (int)smoothTheta;
+
+      if(arePhotodiodesDetecting()){
+        distance = sqrt((photoVectorX * photoVectorX) + (photoVectorY * photoVectorY));
+        //distance = min(max(distance, 0.0), 400.0);
+        distance = map(distance, 0, 400, 0, 255);
+        //distance = 255 - distance; //invert distance so that higher values mean closer distance
+        filteredDistance = (distance * 0.05) + (filteredDistance * (1.0 - 0.05));
+      }else{ distance = 255; filteredDistance = 255; }
     }
   }
 }
@@ -159,8 +168,7 @@ int IRSensor::getAngle(){
 }
 
 int IRSensor::getDistance(){
-  if(intensity == 0) return 254;
-  return map(200-intensity, 0, 200, 0, 253);
+  return (int)filteredDistance;
 }
 
 int IRSensor::getTSSPDetecting(){
@@ -180,19 +188,19 @@ void IRSensor::printIR(unsigned long timeLimit){
     lastUpdate = millis();
 
     for(int i = 0; i < numTSSP; i++){
-      //Serial.print(tsspTimesDetected[i]); Serial.print(' ');
+      Serial.print(photodiodeReadings[i]); Serial.print(' ');
     }
-    //Serial.println();
+    Serial.println();
     
     //Serial.print("rawAngle: "); Serial.print(rawAngle); Serial.print('\t');
-    Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print(' ');
-    Serial.print("distance: "); Serial.print(getDistance()); Serial.print(' ');
+    //Serial.print("smoothAngle: "); Serial.print(smoothAngle); Serial.print(' ');
+    Serial.print("distance: "); Serial.print(getDistance()); Serial.print('\n');
     //Serial.print("intensity: "); Serial.print(intensity); Serial.println();
     //Serial.print("photodiode readings"); Serial.print(photodiodeReadings[0]); Serial.print(' ');
     //Serial.print(photodiodeReadings[1]); Serial.print(' ');
     //Serial.print(photodiodeReadings[2]); Serial.print(' ');
-    Serial.print("TSSP Detecting: "); Serial.print(tsspDetecting); Serial.println();
-    Serial.print("Relative Distance: "); Serial.print(getRelativeDistance()); Serial.println();
+    //Serial.print("TSSP Detecting: "); Serial.print(tsspDetecting); Serial.println();
+    //Serial.print("Relative Distance: "); Serial.print(getRelativeDistance()); Serial.println();
     //Serial.println();
   }
 }

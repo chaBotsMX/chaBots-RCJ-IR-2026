@@ -9,7 +9,7 @@
 #define IRSensor_H
 
 #define numTSSP 16
-#define numPhotodiodes 1
+#define numPhotodiodes 16
 #define bufferSize 60
 
 #include <Arduino.h>
@@ -35,7 +35,7 @@ class IRSensor {
   private:
     //constants
     const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
-    const int photodiodes[numPhotodiodes] = {39/* , 38, 27 */};
+    const int photodiodes[numPhotodiodes] = {39, 38, 40, 41, 16, 17, 18, 19, 22, 23, 21, 20, 24, 25, 26, 27};
     const int neoPin = 11;
     Adafruit_NeoPixel pixels;
 
@@ -79,7 +79,7 @@ class IRSensor {
 
     //variables and locals
     int rawAngle = 500;
-    int intensity = 5000;
+    float intensity = 5000;
 
     int tsspDetecting = 0;
 
@@ -90,11 +90,16 @@ class IRSensor {
 
     float filteredX = 0;
     float filteredY = 0;
-    float filterAlpha = 0.3; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
+    float filterAlpha = 0.5; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
     float ballVectorX = 0;
     float ballVectorY = 0;
-    
+    const int minPhotiodeReading = 190;
+    const int maxPhotiodeReading = 150;
+
+    float distance = 0;
+    float filteredDistance = 0;
+
     void updateSensors();
     void updatePhotodiodes();
     void calculateBallVector();
