@@ -15,6 +15,7 @@
 struct MovementCommandAtk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
+  int rotation;
 };
 
 class AttackerControl {
@@ -30,7 +31,8 @@ class AttackerControl {
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int currentLineAngle,
-      int irAngle, int irDistance
+      int irAngle, int irDistance,
+      int cameraAngle, int cameraDistance, float yaw
     );
 
     bool isBallOnFront(int irAngle, int irDistance);

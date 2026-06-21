@@ -9,6 +9,7 @@
 #include "LineAvoiding.h"
 #include "attacker/AttackerControl.h"
 #include "goalkeeper/GoalkeeperControl.h"
+#include "display/Display.h"
 
 class Robot {
     public:
@@ -20,6 +21,8 @@ class Robot {
 
         AttackerControl attacker;
         GoalkeeperControl goalkeeper;
+        
+        Display display;
 
         MovementCommandAtk atkCmd;
         MovementCommandGk gkCmd;
@@ -37,8 +40,8 @@ class Robot {
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
         
-        void updateAttackerControl(int currentLineAngle, int irAngle, int irDistance){
-            atkCmd = attacker.calculateMovement(currentLineAngle, irAngle, irDistance);
+        void updateAttackerControl(int currentLineAngle, int irAngle, int irDistance, int cameraAngle, int cameraDistance, float yaw){
+            atkCmd = attacker.calculateMovement(currentLineAngle, irAngle, irDistance, cameraAngle, cameraDistance, yaw);
         }
 
         void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){
@@ -101,8 +104,7 @@ class Robot {
             return button2Toggle;
         }
 
-        int getYawCorrection(){
-            float setpoint = 0; // Desired yaw angle (e.g., facing forward)
+        int getYawCorrection(float setpoint = 0) { // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
             if(wasButton1Pressed()) setpoint = currentYaw;
             float error = currentYaw - setpoint;

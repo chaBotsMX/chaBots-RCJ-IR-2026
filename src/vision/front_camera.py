@@ -6,24 +6,25 @@ from pyb import UART
 
 TARGET = "YELLOW"
 
-YELLOW_THRESHOLD = (23, 100, -5, 127, 20, 127)
-BLUE_THRESHOLD = (0, 11, -128, 17, -128, -3)
+YELLOW_THRESHOLD = (65, 100, -128, 127, 11, 127)
+BLUE_THRESHOLD = (0, 21, -10, 127, -128, 0)
 THRESHOLDS = [YELLOW_THRESHOLD, BLUE_THRESHOLD]
 
-ROI = (0, 80, 320, 80)
+CROP_FROM_TOP = 120
 
-FOV = 140
-DEGREES_IN_PIXEL = 0.4375
+ROI = (0, CROP_FROM_TOP, 320, 240 - CROP_FROM_TOP)
+
+FOV_HORIZONTAL = 71.8
+DEGREES_IN_PIXEL = FOV_HORIZONTAL/320
 
 # Calibration points: (top_y_pixel, distance_in_cm)
 # Keep this list sorted from LOWEST top_y to HIGHEST top_y
 # needs to calibrate
 CALIBRATION_POINTS = [
-    (0, 0),
-    (0, 0),
-    (0, 0),
-    (0, 0),
-    (0, 0)
+    (14, 200),
+    (16, 150),
+    (20, 100),
+    (22, 50)
 ]
 
 # init sensor
@@ -32,22 +33,24 @@ sensor.reset()
 sensor.set_pixformat(sensor.RGB565)
 sensor.set_framesize(sensor.QVGA)
 sensor.set_framerate(120)
+sensor.set_vflip(True)
+sensor.set_hmirror(True)
 
-sensor.set_auto_gain(False, gain_db=50)
+sensor.set_auto_gain(False, gain_db=24)
 
-#sensor.set_auto_whitebal(False)
-sensor.set_auto_exposure(False, exposure_us=200000)
+sensor.set_auto_whitebal(False, rgb_gain_db=(64.2, 60.2, 63.0))
+sensor.set_auto_exposure(False, exposure_us=50000)
 
-sensor.set_contrast(1)
-sensor.set_brightness(3)
-sensor.set_saturation(2)
+#sensor.set_contrast(1)
+#sensor.set_brightness(3)
+#sensor.set_saturation(2)
 sensor.skip_frames(time=500)
 
 sensor.set_windowing(ROI)
 
 clock = time.clock()
 
-# uart = UART(3, 115200, timeout_char=0)
+uart = UART(3, 115200, timeout_char=0)
 
 angle = 254
 distance = 254
@@ -73,6 +76,19 @@ def estimate_distance(blob_y):
             return interpolated_distance
     return 254
 
+def map_value(x, in_min, in_max, out_min, out_max):
+    # Prevent division by zero if in_min equals in_max
+    if in_max == in_min:
+        return out_min
+
+    # Calculate the mapped value
+    mapped = out_min + (x - in_min) * (out_max - out_min) / (in_max - in_min)
+
+    # Constrain the value to the output range (optional but recommended)
+    return max(min(int(mapped), out_max), out_min)
+
+MIN_AREA = 1000
+MAX_AREA = 20000
 
 def process_goal(blobs, min_confidence):
     if not blobs:
@@ -84,7 +100,7 @@ def process_goal(blobs, min_confidence):
         return None
 
     angle = int((largest_blob.cx() - 160) * (DEGREES_IN_PIXEL))
-    distance = estimate_distance(largest_blob.y())
+    distance = map_value(largest_blob.area(), MIN_AREA, MAX_AREA, 0, 255) # estimate_distance(largest_blob.y())
 
     aspect_ratio = largest_blob.w() / largest_blob.h()
     confidence = min(int((aspect_ratio * 100) / 6.0), 100)
@@ -98,7 +114,7 @@ while True:
     clock.tick()
     img = sensor.snapshot()
 
-    # img.lens_corr(strength=1.8)
+    img.lens_corr(strength=1.8)
 
     # yellow_blobs = img.find_blobs([YELLOW_THRESHOLD], pixels_threshold=100, merge=True)
     # blue_blobs = img.find_blobs([BLUE_THRESHOLD], pixels_threshold=100, merge=True)
@@ -106,8 +122,8 @@ while True:
     yellow_blobs = [b for b in all_blobs if b.code() == 1]  # 1st threshold in list
     blue_blobs = [b for b in all_blobs if b.code() == 2]  # 2nd threshold in list
 
-    yellow_goal = process_goal(yellow_blobs, 75)
-    blue_goal = process_goal(blue_blobs, 75)
+    yellow_goal = process_goal(yellow_blobs, 0)
+    blue_goal = process_goal(blue_blobs, 0)
 
     current_goal = yellow_goal if TARGET == "YELLOW" else blue_goal
 
@@ -116,6 +132,7 @@ while True:
         img.draw_rectangle(goal_blob.rect())  # Keeps visual feedback overhead low
     else:
         angle, distance, confidence = 254, 254, 254
+        goal_blob = None
 
     received = 0
     while uart.any():
@@ -126,4 +143,5 @@ while True:
         uart.write(bytes([distance]))
         uart.write(bytes([confidence]))
 
-    print(angle, distance, confidence, clock.fps())
+    print(angle, distance, confidence, goal_blob.y(), clock.fps(), goal_blob.area())
+    # print(sensor.get_gain_db(), sensor.get_exposure_us(), sensor.get_rgb_gain_db(), )

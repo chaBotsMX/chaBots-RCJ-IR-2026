@@ -12,7 +12,7 @@
 #include <Arduino.h>
 
 struct DataReceiver {
-  uint8_t data[2];
+  uint8_t data[3];
   uint8_t expectedBytes;
   uint8_t requestByte;
   uint32_t timeout;
@@ -66,7 +66,7 @@ struct DataReceiver {
     enum State : uint8_t { IDLE, RECEIVING };
     State   _state;
     uint8_t _count;
-    uint8_t _buf[2];
+    uint8_t _buf[3];
     uint32_t _start;
 };
 
