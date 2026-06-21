@@ -27,7 +27,7 @@ void LineSensor::begin(){
     if(i%2 == 0) continue;
     unsigned long start = millis();
     while(millis() - start < 20){}
-    pixels.setPixelColor(i, pixels.Color(100, 100, 100));
+    pixels.setPixelColor(i, pixels.Color(150, 150, 150));
     pixels.show();
   }
 }

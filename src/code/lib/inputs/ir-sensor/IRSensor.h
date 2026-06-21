@@ -94,8 +94,8 @@ class IRSensor {
     int smoothAngle = 500;
     float ballVectorX = 0;
     float ballVectorY = 0;
-    const int minPhotiodeReading = 190;
-    const int maxPhotiodeReading = 150;
+    const int minPhotodiodeReading = 220;
+    const int maxPhotodiodeReading = 350;
 
     float distance = 0;
     float filteredDistance = 0;

@@ -37,8 +37,8 @@ class Robot {
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
         }
         
-        void updateAttackerControl(int currentLineAngle, int pastLineAngle, int irAngle, int irDistance){
-            atkCmd = attacker.calculateMovement(currentLineAngle, pastLineAngle, irAngle, irDistance);
+        void updateAttackerControl(int currentLineAngle, int irAngle, int irDistance){
+            atkCmd = attacker.calculateMovement(currentLineAngle, irAngle, irDistance);
         }
 
         void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){

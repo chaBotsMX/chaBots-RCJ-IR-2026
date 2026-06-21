@@ -15,14 +15,9 @@ class LineAvoiding {
         boolean isInverted = false;
 
         int getAvoidLineAngle(int currentLineAngle, int pastLineAngle){
-            float currentX = cos(radians(currentLineAngle));
-            float currentY = sin(radians(currentLineAngle));
-            float pastX = cos(radians(pastLineAngle));
-            float pastY = sin(radians(pastLineAngle));
-            
-            float dotProduct = (currentX * pastX) + (currentY * pastY);
-            if(dotProduct < 0) isInverted = !isInverted;
-            return isInverted ? (currentLineAngle + 180) % 360 : currentLineAngle;
+            float dotProduct = cos(radians(pastLineAngle - currentLineAngle));
+            if(dotProduct < 0) return (pastLineAngle + 180) % 360; // if flipped
+            return (currentLineAngle + 180) % 360;
         }
 
     private:

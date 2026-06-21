@@ -26,7 +26,7 @@ void loop() {
   ir.printIR(100); //print readings every 100ms
 
   angle = ir.getAngle();
-  distance = ir.getRelativeDistance();
+  distance = ir.getDistance();
 
   uart.sendIR(angle/2, distance);
 }

@@ -59,7 +59,7 @@ void loop() {
   if(robot.imu.update()) yawCorrection = robot.getYawCorrection();
 
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(lineAngle, pastLineAngle, irAngle, irDistance);
+    robot.updateAttackerControl(lineAngle, irAngle, irDistance);
 
     robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
 
@@ -69,6 +69,4 @@ void loop() {
   } else{
     robot.drive.writeAllMotorsOutput(0);
   }
-
-  pastLineAngle = lineAngle;
 }

@@ -29,7 +29,7 @@ class AttackerControl {
      * @return MovementCommand with angle and power
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
-      int currentLineAngle, int pastLineAngle,
+      int currentLineAngle,
       int irAngle, int irDistance
     );
 
@@ -40,16 +40,20 @@ class AttackerControl {
     LineAvoiding line;
     
   private:
-    const int kIRDistanceOffset = 0; //
-    const int kAvoidDistance = 0; //
+    const int kIRDistanceOffset = 180; //
+    const int kAvoidDistance = 170; //
 
-    const int maxPower = 180;
+    const int maxPower = 160;
     const int minPower = 50;
 
     const float kPowerP = 0.1;
 
+    bool firstDetected = false;
+    int initialLineAngle = 500;
+
     int getBallChasingAngle(int irAngle, int irDistance);
     int getBallChasingAngleNoDistance(int irAngle, int irDistance);
+    int getBallChasingAngleNew(int irAngle, int irDistance);
     int getBallChasingPower(int irAngle, int irDistance);
 };
 
