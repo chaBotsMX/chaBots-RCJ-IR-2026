@@ -31,19 +31,16 @@ void IRSensor::update(unsigned long timeLimit){
   static unsigned long lastUpdate = 0;
 
   updateSensors();
-  calculateBallVector();
+  calculateBallVector(); // uses raw tsspTimesDetected[] -> updates every call, no timer gate
 
   if((micros() - lastUpdate) >= timeLimit){
     lastUpdate = micros();
-
-    //updateSensors();
 
     bool ballPresent = updateHistoryAndCheckReaction();
 
     if(ballPresent){
       lostCount = 0;
-      int maxIndex = findMaxSensorIndex();
-      //calculateBallVector();
+      int maxIndex = findMaxSensorIndex(); // smoothed peak, for the slower distance calc
       calculateDistance(maxIndex);
     } else {
       lostCount++;
@@ -54,19 +51,22 @@ void IRSensor::update(unsigned long timeLimit){
   }
 }
 
-// Fast buffered sampling of the raw TSSP pins (fills the ring buffer, counts hits per sensor)
+// Fast buffered sampling of the raw TSSP pins.
+// Uses a running count per sensor (O(1) per sensor per call) instead of
+// rescanning the whole ring buffer every update (was O(bufferSize) per sensor,
+// i.e. numTSSP*bufferSize reads every single call).
 void IRSensor::updateSensors(){
   for(int i = 0; i < numTSSP; i++){
     bool currentDetection = !digitalReadFast(tssp[i]);
     bool oldValue = tsspDetected[i][bufferIndex];
- 
+
     if(currentDetection != oldValue){
       tsspTimesDetected[i] += currentDetection ? 1 : -1;
     }
- 
+
     tsspDetected[i][bufferIndex] = currentDetection;
   }
- 
+
   bufferIndex++;
   if(bufferIndex >= bufferSize) bufferIndex = 0;
 }
@@ -116,6 +116,21 @@ int IRSensor::findMaxSensorIndex(){
   return maxIdx;
 }
 
+// Peak finder over the raw, instantaneous per-cycle counts (no history smoothing).
+// Used by calculateBallVector() so angle tracks the ball every loop, not just
+// on the (slower) distance-update timer.
+int IRSensor::findMaxRawSensorIndex(){
+  int maxIdx = 0;
+  int maxVal = 0;
+  for(int i = 0; i < numTSSP; i++){
+    if(tsspTimesDetected[i] > maxVal){
+      maxVal = tsspTimesDetected[i];
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+
 bool IRSensor::isBallDetected(){
   for(int i = 0; i < numTSSP; i++){
     if(tsspTimesDetected[i] > 0) return true;
@@ -126,8 +141,8 @@ bool IRSensor::isBallDetected(){
 // Weighted-vector angle from the peak sensor and its neighbors (uses instantaneous
 // raw counts, not the slower distance-history smoothing, so angle stays responsive).
 void IRSensor::calculateBallVector(){
-  int maxIndex = findMaxSensorIndex();
-  int maxVal = smoothedCount[maxIndex];
+  int maxIndex = findMaxRawSensorIndex();
+  int maxVal = tsspTimesDetected[maxIndex];
 
   pixels.clear();
   pixels.setPixelColor(maxIndex, pixels.Color(50, 50, 50));
@@ -147,8 +162,6 @@ void IRSensor::calculateBallVector(){
       sumY += vectorY[idx] * w;
       reading++;
     }
-
-    //tsspDetecting = (0.5f * reading) + ((1.0f - 0.5f) * tsspDetecting);
 
     if(reading == 0 || (sumX == 0.0f && sumY == 0.0f)){
       noVector = true;
@@ -195,12 +208,12 @@ void IRSensor::calculateDistance(int maxIndex){
 
   // Map raw average hit-count to a 0-254 "distance" scale (0 = far/none, 254 = closest),
   // matching the convention used by getDistance() elsewhere in this codebase.
-  // Tune maxExpectedCount to your bufferSize/emitter power during calibration.
-  const uint32_t maxExpectedDistance = 190;
+  // Tune maxExpectedDistance to your bufferSize/emitter power during calibration --
+  // this was tuned against the old bufferSize=600/distHistCount=10 combo, so retest.
+  const uint32_t maxExpectedDistance = 90;
   if(avg > maxExpectedDistance) avg = maxExpectedDistance;
   distance = maxExpectedDistance - avg; // invert so smaller number = closer, consistent with old convention
   filteredDistance = (distance * 0.05f) + (filteredDistance * (1.0f - 0.05f));
-  //filteredDistance = avg;
 }
 
 void IRSensor::resetTracking(){

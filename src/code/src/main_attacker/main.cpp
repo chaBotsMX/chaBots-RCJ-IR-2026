@@ -77,9 +77,9 @@ void loop() {
 
     robot.drive.driveToAngle(atkCmd.angle, atkCmd.power, yawCorrection);
 
-    //if(robot.hasBall(irAngle, irDistance)){
-      //robot.kicker.kick();
-    //}
+    if(robot.hasBall(irAngle, irDistance)){
+      robot.kicker.kick();
+    }
   } else{
     robot.drive.writeAllMotorsOutput(0);
   }

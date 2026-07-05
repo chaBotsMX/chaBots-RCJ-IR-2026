@@ -93,7 +93,7 @@ int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) 
 }
 
 int AttackerControl::getBallChasingAngleNew(int irAngle, int irDistance) {
-    float proximity = map(float(irDistance), 0.0, 254, 1.0, 0.0); // Closer ball gives higher proximity
+    float proximity = map(float(irDistance), 0.0, 90, 1.0, 0.0); // Closer ball gives higher proximity
     
     if(irAngle > 270 || irAngle < 75){ //right side
         int adjusted = irAngle - (90 * proximity); // Adjust angle based on proximity
@@ -122,7 +122,7 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
 }
 
 bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
-    if((irAngle >= 75 and irAngle <= 105) and irDistance < 240) return true;
+    if((irAngle >= 75 and irAngle <= 105) and irDistance < 80) return true;
     return false;
 }
 

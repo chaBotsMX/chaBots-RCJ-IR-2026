@@ -5,7 +5,7 @@
 IRSensor ir;
 UART uart(Serial7, IRBoard{});
 
-#define IR_UPDATE_TIME 833
+#define IR_UPDATE_TIME 1000
 
 int angle = 0;
 int distance = 0;

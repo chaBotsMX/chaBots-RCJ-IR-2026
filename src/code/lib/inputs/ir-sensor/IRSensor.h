@@ -11,7 +11,7 @@
 #define IRSensor_H
 
 #define numTSSP 16
-#define bufferSize 600
+#define bufferSize 250
 
 // How many neighbors each side of the peak sensor to use for angle (7-wide window on 24 sensors -> scaled to 16)
 #define ANGLE_HALF_WINDOW 2
@@ -21,7 +21,7 @@
 
 #define NOISE_THRESHOLD   15      // min smoothed count to count as "seeing" a sensor (tune for your buffer size)
 #define LOST_RESET_COUNT  10     // consecutive "no ball" updates before resetting distance/angle filters
-#define ANGLE_EMA_ALPHA   0.05f  // smoothing applied to the angle vector components (not the angle itself)
+#define ANGLE_EMA_ALPHA   0.1f  // smoothing applied to the angle vector components (not the angle itself)
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
@@ -112,6 +112,7 @@ class IRSensor {
     void updateSensors();
     bool updateHistoryAndCheckReaction();
     int findMaxSensorIndex();
+    int findMaxRawSensorIndex();
     void calculateBallVector();
     void calculateDistance(int maxIndex);
     void resetTracking();

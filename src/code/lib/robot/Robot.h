@@ -38,7 +38,7 @@ class Robot {
             static unsigned long ballSeenSince = 0;
             static bool tracking = false;
 
-            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 150); // Ball in front and close
+            bool currentBallState = ((irAngle >= 80 and irAngle <= 100) and irDistance < 30); // Ball in front and close
 
             if (currentBallState) {
                 if (!tracking) {
