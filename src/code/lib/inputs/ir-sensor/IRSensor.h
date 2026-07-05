@@ -1,6 +1,8 @@
 /**
  * @file IRSensor.h
- * 
+ *
+ * @brief TSSP-only ball angle + distance detection (raw-count vector method).
+ *
  * @author Alfonso De Anda / chaBotsMX
  * @date 10/02/26
  */
@@ -9,8 +11,17 @@
 #define IRSensor_H
 
 #define numTSSP 16
-#define numPhotodiodes 16
-#define bufferSize 60
+#define bufferSize 600
+
+// How many neighbors each side of the peak sensor to use for angle (7-wide window on 24 sensors -> scaled to 16)
+#define ANGLE_HALF_WINDOW 2
+// How many total sensors around the peak to average for distance (12-wide window on 24 sensors -> scaled to 16)
+#define DIST_BEFORE 2
+#define DIST_AFTER  3
+
+#define NOISE_THRESHOLD   15      // min smoothed count to count as "seeing" a sensor (tune for your buffer size)
+#define LOST_RESET_COUNT  10     // consecutive "no ball" updates before resetting distance/angle filters
+#define ANGLE_EMA_ALPHA   0.05f  // smoothing applied to the angle vector components (not the angle itself)
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
@@ -22,20 +33,16 @@ class IRSensor {
     void printIR(unsigned long timeLimit);
 
     bool isBallDetected();
-    bool arePhotodiodesDetecting();
-    bool isBallClose();
 
     int getAngle();
     int getDistance();
     int getTSSPDetecting();
     float getBallVectorX();
     float getBallVectorY();
-    int getRelativeDistance();
 
   private:
     //constants
     const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
-    const int photodiodes[numPhotodiodes] = {39, 38, 40, 41, 16, 17, 18, 19, 22, 23, 21, 20, 24, 25, 26, 27};
     const int neoPin = 11;
     Adafruit_NeoPixel pixels;
 
@@ -78,31 +85,36 @@ class IRSensor {
     };
 
     //variables and locals
-    int rawAngle = 500;
-    float intensity = 5000;
+    bool tsspDetected[numTSSP][bufferSize]; // matrix with tssp states over time
+    int bufferIndex = 0;
+    int tsspTimesDetected[numTSSP];         // raw hit-count per sensor in current buffer window
+
+    // history buffer used for the distance smoothing (separate, slower-moving average)
+    static const int distHistCount = 10;
+    uint32_t sensorHistory[numTSSP][distHistCount];
+    int histIndex = 0;
+    bool histFull = false;
+    uint32_t smoothedCount[numTSSP];
 
     int tsspDetecting = 0;
-
-    bool tsspDetected[numTSSP][bufferSize]; //matrix with tssp states over time
-    int photodiodeReadings[numPhotodiodes];
-    int bufferIndex = 0;
-    int tsspTimesDetected[numTSSP];
+    uint8_t lostCount = 0;
 
     float filteredX = 0;
     float filteredY = 0;
-    float filterAlpha = 0.5; // Adjust between 0.0 and 1.0 (Lower = smoother but laggier)
     int smoothAngle = 500;
     float ballVectorX = 0;
     float ballVectorY = 0;
-    const int minPhotodiodeReading = 220;
-    const int maxPhotodiodeReading = 350;
+    bool emaInit = false;
 
-    float distance = 0;
-    float filteredDistance = 0;
+    float distance = 254;
+    float filteredDistance = 254;
 
     void updateSensors();
-    void updatePhotodiodes();
+    bool updateHistoryAndCheckReaction();
+    int findMaxSensorIndex();
     void calculateBallVector();
+    void calculateDistance(int maxIndex);
+    void resetTracking();
 };
 
 #endif

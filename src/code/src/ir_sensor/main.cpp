@@ -5,7 +5,7 @@
 IRSensor ir;
 UART uart(Serial7, IRBoard{});
 
-#define IR_UPDATE_TIME 1600
+#define IR_UPDATE_TIME 833
 
 int angle = 0;
 int distance = 0;
@@ -22,7 +22,7 @@ void setup() {
 
 void loop() {
   ir.update(IR_UPDATE_TIME); //update sensors every loop
-  
+
   ir.printIR(100); //print readings every 100ms
 
   angle = ir.getAngle();

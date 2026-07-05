@@ -18,16 +18,10 @@ class Robot {
         IMU imu;
         PD pd;
         LineAvoiding lineAvoiding;
-
-        AttackerControl attacker;
-        GoalkeeperControl goalkeeper;
         
         Display display;
-
-        MovementCommandAtk atkCmd;
-        MovementCommandGk gkCmd;
     
-        Robot() : pd(4, 0.1, 100) {
+        Robot() : pd(4, 0.1, 180) {
             pinMode(lineNeoPin, OUTPUT);
             pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
         }
@@ -38,14 +32,6 @@ class Robot {
 
         float getPowerLipoVoltage(){
             return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
-        }
-        
-        void updateAttackerControl(int currentLineAngle, int irAngle, int irDistance, int cameraAngle, int cameraDistance, float yaw){
-            atkCmd = attacker.calculateMovement(currentLineAngle, irAngle, irDistance, cameraAngle, cameraDistance, yaw);
-        }
-
-        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){
-            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, yaw);
         }
 
         bool hasBall(int irAngle, int irDistance){
@@ -106,7 +92,7 @@ class Robot {
 
         int getYawCorrection(float setpoint = 0) { // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
-            if(wasButton1Pressed()) setpoint = currentYaw;
+            //if(wasButton1Pressed()) setpoint = currentYaw;
             float error = currentYaw - setpoint;
             return pd.getCorrection(error);
         }

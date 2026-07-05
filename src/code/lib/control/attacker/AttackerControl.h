@@ -45,7 +45,7 @@ class AttackerControl {
     const int kIRDistanceOffset = 180; //
     const int kAvoidDistance = 170; //
 
-    const int maxPower = 160;
+    const int maxPower = 220;
     const int minPower = 50;
 
     const float kPowerP = 0.1;

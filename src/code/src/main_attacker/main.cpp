@@ -4,6 +4,8 @@
 
 Robot robot;
 UART uart (Serial8, Serial5, Serial2);
+AttackerControl attacker;
+MovementCommandAtk atkCmd;
 
 unsigned long long updateTimer = 0;
 
@@ -60,23 +62,24 @@ void loop() {
     //Serial.print("IR Angle: ");Serial.println(irAngle);
     //Serial.print("IR Distance: ");Serial.println(irDistance);
     //Serial.print("Line Angle: ");Serial.println(lineAngle);
-    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
     //Serial.print("Camera Distance: ");Serial.println(cameraDistance);
-    Serial.print("Camera Confidence: ");Serial.println(cameraConfidence);
+    //Serial.print("Camera Confidence: ");Serial.println(cameraConfidence);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
     //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    Serial.println(map(float(irDistance), 0.0, 254, 1.0, 0.0));
   }
 
-  if(robot.imu.update()) yawCorrection = robot.getYawCorrection(robot.atkCmd.rotation);
-
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(lineAngle, irAngle, irDistance, cameraAngle, cameraDistance, robot.imu.getYaw());
+    atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, cameraDistance, robot.imu.getYaw());
 
-    robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
+    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(atkCmd.rotation);
 
-    if(robot.hasBall(irAngle, irDistance)){
-      robot.kicker.kick();
-    }
+    robot.drive.driveToAngle(atkCmd.angle, atkCmd.power, yawCorrection);
+
+    //if(robot.hasBall(irAngle, irDistance)){
+      //robot.kicker.kick();
+    //}
   } else{
     robot.drive.writeAllMotorsOutput(0);
   }

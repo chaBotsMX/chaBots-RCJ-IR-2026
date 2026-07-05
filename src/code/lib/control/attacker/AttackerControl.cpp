@@ -27,10 +27,10 @@ MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int 
             int offset = cameraAngle - 70;
             cmd.rotation = yaw + offset;
         }
-        else{}
-        cmd.angle = getBallChasingAngleNoDistance(irAngle, irDistance);
+        else{cmd.rotation = 0;}
+        //cmd.angle = getBallChasingAngleNoDistance(irAngle, irDistance);
         //cmd.angle = getBallChasingAngle(irAngle, irDistance);
-        //cmd.angle = getBallChasingAngleNew(irAngle, irDistance);
+        cmd.angle = getBallChasingAngleNew(irAngle, irDistance);
         cmd.power = getBallChasingPower(irAngle, irDistance);
         firstDetected = false; // Reset line detection when ball is detected
     }
@@ -93,7 +93,7 @@ int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) 
 }
 
 int AttackerControl::getBallChasingAngleNew(int irAngle, int irDistance) {
-    float proximity = map(irDistance, 0, 254, 1.0, 0.0); // Closer ball gives higher proximity
+    float proximity = map(float(irDistance), 0.0, 254, 1.0, 0.0); // Closer ball gives higher proximity
     
     if(irAngle > 270 || irAngle < 75){ //right side
         int adjusted = irAngle - (90 * proximity); // Adjust angle based on proximity
@@ -117,8 +117,8 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     float distance = map(irDistance, 0, 254, 0.0, 1.0); // Closer ball gives higher proximity
 
     if(isBallOnFront(irAngle, irDistance)) return maxPower; // Ball is close, full power
-    //return (minPower + maxPower) / 2;
-    return max(minPower, min(maxPower, (maxPower) * distance));
+    return (minPower + maxPower) / 2;
+    //return max(minPower, min(maxPower, (maxPower) * distance));
 }
 
 bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
