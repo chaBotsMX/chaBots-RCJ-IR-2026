@@ -109,11 +109,11 @@ int AttackerControl::getBallChasingAngleNew(int irAngle, int irDistance) {
         return adjusted;
     }
     else{
-        return 90;
+        return irAngle;
     }
 }
 
-int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+/* int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     // If the ball is completely lost, safe return to minimum power or 0
     if (irDistance > 90) return minPower;
 
@@ -131,9 +131,9 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     }
 
     return calculatedPower;
-}
+} */
 
-/* int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     if (irDistance > maxDistance) return minPower;
 
     // 1. Calculate the shortest angular error from the front (90 degrees)
@@ -156,7 +156,7 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
         // Boost the distance factor using a smooth curve.
         // As proximity approaches 1.0 (very close), distanceFactor drops to 0 
         // normally, but we blend in this boost to force the power higher.
-        distanceFactor = distanceFactor + (proximity * 0.45f); 
+        distanceFactor = distanceFactor + (proximity * 0.6f); 
         if (distanceFactor > 1.0f) distanceFactor = 1.0f;
         
         // Visually/Logically: This forces the robot to ignore the "slow down 
@@ -171,7 +171,7 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     int calculatedPower = minPower + (int)(combinedFactor * (maxPower - minPower));
 
     return constrain(calculatedPower, minPower, maxPower);
-} */
+}
 
 bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
     if((irAngle >= apertureLeft and irAngle <= apertureRight) and irDistance < 80) return true;

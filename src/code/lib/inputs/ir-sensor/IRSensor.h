@@ -1,7 +1,9 @@
 /**
  * @file IRSensor.h
  *
- * @brief TSSP-only ball angle + distance detection (raw-count vector method).
+ * @brief TSSP-only ball angle + distance detection (raw-count vector method),
+ *        refined near the front with a 3-photodiode array for higher angular
+ *        precision in a narrow front window.
  *
  * @author Alfonso De Anda / chaBotsMX
  * @date 10/02/26
@@ -25,6 +27,13 @@
 #define LOST_RESET_COUNT  10     // consecutive "no ball" updates before resetting distance/angle filters
 #define ANGLE_EMA_ALPHA   0.1f  // smoothing applied to the angle vector components (not the angle itself)
 
+// --- Photodiode front-refinement ---
+// photodiodes[0] sits under tssp[15], photodiodes[1] under tssp[0], photodiodes[2] under tssp[1]
+#define PHOTO_FRONT_CENTER_DEG   90.0f   // angular center of the photodiode cluster == direction of tssp[0]
+#define PHOTO_WINDOW_HALF_DEG    12.5f   // +-window (in degrees) around the center where photodiodes take over
+#define PHOTO_WINDOW_HYSTERESIS  3.0f    // extra degrees required to EXIT the window once inside, prevents edge chatter
+#define PHOTO_NOISE_MARGIN       75      // reading must exceed baseline by this much to count as a real detection
+
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
@@ -46,6 +55,12 @@ class IRSensor {
     //constants
     const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
     const int photodiodes[numPhotodiodes] = {27, 39, 38};
+    // Index into the TSSP direction table (vectorX/vectorY) that each photodiode is physically aligned with
+    const int photoDirIndex[numPhotodiodes] = {15, 0, 1};
+    // Per-sensor no-ball baseline reading, measured by the user during calibration
+    const int photoBaseline[numPhotodiodes] = {100, 50, 60};
+    const int photoMaxReading = 370; // approximate saturation reading with ball touching sensor, across all 3
+
     const int neoPin = 11;
     Adafruit_NeoPixel pixels;
 
@@ -99,6 +114,8 @@ class IRSensor {
     bool histFull = false;
     uint32_t smoothedCount[numTSSP];
 
+    int photodiodeReadings[numPhotodiodes]; // raw analogRead, unadjusted (kept for printIR/debug)
+
     int tsspDetecting = 0;
     uint8_t lostCount = 0;
 
@@ -108,15 +125,18 @@ class IRSensor {
     float ballVectorX = 0;
     float ballVectorY = 0;
     bool emaInit = false;
+    bool usingPhotoVector = false; // hysteresis state: true while locked onto the photodiode window
 
     float distance = 254;
     float filteredDistance = 254;
 
     void updateSensors();
+    void updatePhotodiodes();
     bool updateHistoryAndCheckReaction();
     int findMaxSensorIndex();
     int findMaxRawSensorIndex();
     void calculateBallVector();
+    bool calculatePhotoVector(float &photoX, float &photoY);
     void calculateDistance(int maxIndex);
     void resetTracking();
 };

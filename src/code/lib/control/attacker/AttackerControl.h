@@ -48,8 +48,8 @@ class AttackerControl {
     const int maxPower = 220;
     const int minPower = 80;
 
-    const int apertureLeft = 75;
-    const int apertureRight = 105;
+    const int apertureLeft = 80;
+    const int apertureRight = 100;
 
     const float maxDistance = 100.0;
 

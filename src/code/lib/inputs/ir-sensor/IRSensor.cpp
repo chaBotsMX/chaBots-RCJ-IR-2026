@@ -2,7 +2,8 @@
  * @file IRSensor.cpp
  * @brief TSSP-only ball angle + distance detection, ported from the raw hit-count
  *        vector method (peak-window weighted atan2 for angle, peak-window average
- *        of smoothed hit-counts for distance).
+ *        of smoothed hit-counts for distance). Refined near the front with a
+ *        3-photodiode array blended in based on how centered the ball is in the window.
  *
  * @author Alfonso De Anda / chaBotsMX
  * @date 10/02/26
@@ -20,6 +21,10 @@ IRSensor::IRSensor() : pixels(numTSSP, neoPin, NEO_RGB + NEO_KHZ800){
     smoothedCount[i] = 0;
   }
 
+  for(int i = 0; i < numPhotodiodes; i++){
+    photodiodeReadings[i] = 0;
+  }
+
   memset(tsspDetected, 0, sizeof(tsspDetected));
   memset(sensorHistory, 0, sizeof(sensorHistory));
 
@@ -34,6 +39,7 @@ void IRSensor::update(unsigned long timeLimit){
   static unsigned long lastUpdate = 0;
 
   updateSensors();
+  updatePhotodiodes();
   calculateBallVector(); // uses raw tsspTimesDetected[] -> updates every call, no timer gate
 
   if((micros() - lastUpdate) >= timeLimit){
@@ -72,6 +78,12 @@ void IRSensor::updateSensors(){
 
   bufferIndex++;
   if(bufferIndex >= bufferSize) bufferIndex = 0;
+}
+
+void IRSensor::updatePhotodiodes(){
+  for(int i = 0; i < numPhotodiodes; i++){
+    photodiodeReadings[i] = analogRead(photodiodes[i]);
+  }
 }
 
 // Pushes the current raw counts into the distance history buffer and returns
@@ -141,8 +153,40 @@ bool IRSensor::isBallDetected(){
   return false;
 }
 
+// Computes a weighted vector from the 3 front photodiodes, baseline-subtracted
+// and clamped to their calibrated no-ball/max-ball range. Reuses the TSSP
+// direction table since each photodiode is physically aligned with a TSSP index.
+// Returns false (and leaves photoX/photoY untouched) if no photodiode sees
+// a real signal above its noise margin.
+bool IRSensor::calculatePhotoVector(float &photoX, float &photoY){
+  float sumX = 0.0f, sumY = 0.0f;
+  bool anyDetected = false;
+
+  for(int i = 0; i < numPhotodiodes; i++){
+    int adjusted = photodiodeReadings[i] - photoBaseline[i];
+    if(adjusted < PHOTO_NOISE_MARGIN) continue; // no real detection on this sensor
+
+    if(adjusted > photoMaxReading) adjusted = photoMaxReading; // clamp to calibrated max
+
+    anyDetected = true;
+
+    int dirIdx = photoDirIndex[i];
+    float w = (float)adjusted * (float)adjusted; // square weighting, consistent with TSSP vector calc
+    sumX += vectorX[dirIdx] * w;
+    sumY += vectorY[dirIdx] * w;
+  }
+
+  if(!anyDetected || (sumX == 0.0f && sumY == 0.0f)) return false;
+
+  photoX = sumX;
+  photoY = sumY;
+  return true;
+}
+
 // Weighted-vector angle from the peak sensor and its neighbors (uses instantaneous
 // raw counts, not the slower distance-history smoothing, so angle stays responsive).
+// Near the front (PHOTO_FRONT_CENTER_DEG +- PHOTO_WINDOW_HALF_DEG), blends in the
+// higher-precision photodiode vector, weighted by how centered the ball is in that window.
 void IRSensor::calculateBallVector(){
   int maxIndex = findMaxRawSensorIndex();
   int maxVal = tsspTimesDetected[maxIndex];
@@ -176,6 +220,40 @@ void IRSensor::calculateBallVector(){
     ballVectorX = 0;
     ballVectorY = 0;
     return;
+  }
+
+  // --- Photodiode front-refinement: hard switch with hysteresis ---
+  // Use the last published smoothAngle to decide if we're in/near the front window.
+  // This is deliberately based on the previous cycle's smoothed angle (not this cycle's raw
+  // TSSP vector) since it's a stable, already-filtered estimate. The window itself widens by
+  // PHOTO_WINDOW_HYSTERESIS once locked in, so a ball sitting right at the edge doesn't cause
+  // rapid switching between TSSP and photodiode sources.
+  if(smoothAngle != 500){
+    float angleDiff = smoothAngle - PHOTO_FRONT_CENTER_DEG;
+    // normalize to [-180, 180]
+    while(angleDiff > 180.0f) angleDiff -= 360.0f;
+    while(angleDiff < -180.0f) angleDiff += 360.0f;
+
+    float activeHalfWindow = usingPhotoVector
+      ? (PHOTO_WINDOW_HALF_DEG + PHOTO_WINDOW_HYSTERESIS)  // wider gate to STAY in
+      : PHOTO_WINDOW_HALF_DEG;                              // normal gate to ENTER
+
+    if(fabsf(angleDiff) <= activeHalfWindow){
+      float photoX, photoY;
+      if(calculatePhotoVector(photoX, photoY)){
+        // Photodiodes only: fully replace the TSSP vector, no blending.
+        sumX = photoX;
+        sumY = photoY;
+        usingPhotoVector = true;
+      } else {
+        // In the window but no real photodiode signal (e.g. ball just out of their FOV) -> fall back to TSSP
+        usingPhotoVector = false;
+      }
+    } else {
+      usingPhotoVector = false;
+    }
+  } else {
+    usingPhotoVector = false;
   }
 
   if(!emaInit){
@@ -227,6 +305,7 @@ void IRSensor::resetTracking(){
   filteredX = 0;
   filteredY = 0;
   emaInit = false;
+  usingPhotoVector = false;
 
   distance = 254;
   filteredDistance = 254;
@@ -272,7 +351,7 @@ void IRSensor::printIR(unsigned long timeLimit){
     Serial.println();
 
     for(int i = 0; i < numPhotodiodes; i++){
-      Serial.print(analogRead(photodiodes[i])); Serial.print(' ');
+      Serial.print(photodiodeReadings[i] - photoBaseline[i]); Serial.print(' ');
     }
     Serial.println();
 
