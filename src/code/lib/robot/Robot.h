@@ -45,7 +45,7 @@ class Robot {
                     ballSeenSince = millis();
                     tracking = true;
                 }
-                if (millis() - ballSeenSince >= 80) {
+                if (millis() - ballSeenSince >= 120) {
                     return true;
                 }
             } else {

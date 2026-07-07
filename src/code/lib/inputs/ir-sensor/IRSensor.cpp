@@ -23,6 +23,9 @@ IRSensor::IRSensor() : pixels(numTSSP, neoPin, NEO_RGB + NEO_KHZ800){
   memset(tsspDetected, 0, sizeof(tsspDetected));
   memset(sensorHistory, 0, sizeof(sensorHistory));
 
+  analogReadResolution(14);
+  analogReadAveraging(16);
+
   pixels.begin();
   pixels.clear();
 }
@@ -213,7 +216,8 @@ void IRSensor::calculateDistance(int maxIndex){
   const uint32_t maxExpectedDistance = 90;
   if(avg > maxExpectedDistance) avg = maxExpectedDistance;
   distance = maxExpectedDistance - avg; // invert so smaller number = closer, consistent with old convention
-  filteredDistance = (distance * 0.05f) + (filteredDistance * (1.0f - 0.05f));
+  filteredDistance = (distance * 0.1f) + (filteredDistance * (1.0f - 0.1f));
+  //filteredDistance = avg;
 }
 
 void IRSensor::resetTracking(){
@@ -264,6 +268,11 @@ void IRSensor::printIR(unsigned long timeLimit){
 
     for(int i = 0; i < numTSSP; i++){
       Serial.print(smoothedCount[i]); Serial.print(' ');
+    }
+    Serial.println();
+
+    for(int i = 0; i < numPhotodiodes; i++){
+      Serial.print(analogRead(photodiodes[i])); Serial.print(' ');
     }
     Serial.println();
 

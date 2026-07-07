@@ -46,7 +46,12 @@ class AttackerControl {
     const int kAvoidDistance = 170; //
 
     const int maxPower = 220;
-    const int minPower = 50;
+    const int minPower = 80;
+
+    const int apertureLeft = 75;
+    const int apertureRight = 105;
+
+    const float maxDistance = 100.0;
 
     const float kPowerP = 0.1;
 

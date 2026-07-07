@@ -95,38 +95,85 @@ int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) 
 int AttackerControl::getBallChasingAngleNew(int irAngle, int irDistance) {
     float proximity = map(float(irDistance), 0.0, 90, 1.0, 0.0); // Closer ball gives higher proximity
     
-    if(irAngle > 270 || irAngle < 75){ //right side
+    if(irAngle > 270 || irAngle < apertureLeft){ //right side
         int adjusted = irAngle - (90 * proximity); // Adjust angle based on proximity
         // Fix negative modulo
         if(adjusted < 0) adjusted += 360;
         return adjusted;
     }
     // Left side
-    else if(irAngle > 105 && irAngle < 270){
+    else if(irAngle > apertureRight && irAngle < 270){
         int adjusted = irAngle + (90 * proximity);
         // Handle wrap-around
         if(adjusted >= 360) adjusted -= 360;
         return adjusted;
     }
     else{
-        return 90; // Ball is directly in front, go straight
+        return 90;
     }
 }
 
 int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
-    float distance = map(irDistance, 0, 254, 0.0, 1.0); // Closer ball gives higher proximity
+    // If the ball is completely lost, safe return to minimum power or 0
+    if (irDistance > 90) return minPower;
 
-    if(isBallOnFront(irAngle, irDistance)) return maxPower; // Ball is close, full power
-    return (minPower + maxPower) / 2;
-    //return max(minPower, min(maxPower, (maxPower) * distance));
+    // 1. Constrain raw distance to the valid 0-90 scale just in case
+    int constrainedDist = constrain(irDistance, 0, 90);
+
+    // 2. Map distance directly to power: 
+    // 0 (closest) -> minPower
+    // 90 (furthest) -> maxPower
+    int calculatedPower = map(constrainedDist, 0, 90, minPower, maxPower);
+
+    // 3. Override rule: If the ball is right in front, charge! 
+    if (isBallOnFront(irAngle, irDistance)) {
+        return maxPower; 
+    }
+
+    return calculatedPower;
 }
+
+/* int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+    if (irDistance > maxDistance) return minPower;
+
+    // 1. Calculate the shortest angular error from the front (90 degrees)
+    int angleError = abs(irAngle - 90);
+    if (angleError > 180) {
+        angleError = 360 - angleError;
+    }
+
+    // 2. Base Factors (0.0 to 1.0)
+    float distanceFactor = constrain(irDistance, 0, maxDistance) / maxDistance;
+    float angleFactor = angleError / 180.0f;
+
+    // 3. The "Front-Channel Strike" Modification
+    // If the ball is closely lined up with the front (+/- 15 degrees) 
+    // and within striking distance (< 80)
+    if (angleError <= 20 && irDistance < 60) {
+        // Invert the distance so: 0 (closest) -> 1.0, 80 (limit) -> 0.0
+        float proximity = (60.0f - constrain(irDistance, 0, 60)) / 60.0f;
+        
+        // Boost the distance factor using a smooth curve.
+        // As proximity approaches 1.0 (very close), distanceFactor drops to 0 
+        // normally, but we blend in this boost to force the power higher.
+        distanceFactor = distanceFactor + (proximity * 0.45f); 
+        if (distanceFactor > 1.0f) distanceFactor = 1.0f;
+        
+        // Visually/Logically: This forces the robot to ignore the "slow down 
+        // when close" rule ONLY when the ball is perfectly lined up to be captured.
+    }
+
+    // 4. Combine with your tuned weights
+    const float DISTANCE_WEIGHT = 0.65f;
+    float combinedFactor = (distanceFactor * DISTANCE_WEIGHT) + (angleFactor * (1.0f - DISTANCE_WEIGHT));
+
+    // 5. Final Output calculation
+    int calculatedPower = minPower + (int)(combinedFactor * (maxPower - minPower));
+
+    return constrain(calculatedPower, minPower, maxPower);
+} */
 
 bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
-    if((irAngle >= 75 and irAngle <= 105) and irDistance < 80) return true;
-    return false;
-}
-
-bool AttackerControl::robotHasBall(int irAngle, int irDistance){
-    if((irAngle >= 80 and irAngle <= 100) and irDistance == 0) return true;
+    if((irAngle >= apertureLeft and irAngle <= apertureRight) and irDistance < 80) return true;
     return false;
 }

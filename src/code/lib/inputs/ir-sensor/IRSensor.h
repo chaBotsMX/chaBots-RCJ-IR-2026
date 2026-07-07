@@ -13,6 +13,8 @@
 #define numTSSP 16
 #define bufferSize 250
 
+#define numPhotodiodes 3
+
 // How many neighbors each side of the peak sensor to use for angle (7-wide window on 24 sensors -> scaled to 16)
 #define ANGLE_HALF_WINDOW 2
 // How many total sensors around the peak to average for distance (12-wide window on 24 sensors -> scaled to 16)
@@ -43,6 +45,7 @@ class IRSensor {
   private:
     //constants
     const int tssp[numTSSP] = {33, 34, 35, 36, 37, 14, 15, 3, 2, 4, 5, 6, 12, 30, 32, 31};
+    const int photodiodes[numPhotodiodes] = {27, 39, 38};
     const int neoPin = 11;
     Adafruit_NeoPixel pixels;
 
@@ -90,7 +93,7 @@ class IRSensor {
     int tsspTimesDetected[numTSSP];         // raw hit-count per sensor in current buffer window
 
     // history buffer used for the distance smoothing (separate, slower-moving average)
-    static const int distHistCount = 10;
+    static const int distHistCount = 12;
     uint32_t sensorHistory[numTSSP][distHistCount];
     int histIndex = 0;
     bool histFull = false;
