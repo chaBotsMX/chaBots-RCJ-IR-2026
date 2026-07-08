@@ -39,6 +39,10 @@ class AttackerControl {
 
     bool robotHasBall(int irAngle, int irDistance);
 
+    float debug_distanceFactor;
+    float debug_angleFactor;
+    float debug_combinedFactor;
+
     LineAvoiding line;
     
   private:

@@ -27,11 +27,11 @@ class Robot {
         }
 
         float getLogicLipoVoltage(){
-            return analogRead(logicLipoVoltagePin); //((analogRead(logicLipoVoltagePin) * 3.3) / 1023.0) * 2 ;
+            return map(float(analogRead(logicLipoVoltagePin)), 0.0, 1023.0, 0.0, 3.3) * 2;
         }
 
         float getPowerLipoVoltage(){
-            return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
+            return map(float(analogRead(powerLipoVoltagePin)), 0.0, 1023.0, 0.0, 3.3) * 5;
         }
 
         bool hasBall(int irAngle, int irDistance){
@@ -96,6 +96,32 @@ class Robot {
             float error = currentYaw - setpoint;
             return pd.getCorrection(error);
         }
+
+        void displayVoltage(){
+            display.clear();
+            display.showText(String(getLogicLipoVoltage()) + "V", 5, 5, 2);
+            display.showText("Logic", 5, 25, 1);
+            display.showText(String(getPowerLipoVoltage()) + "V", 5, 35, 2);
+            display.showText("Power", 5, 55, 1);
+        }
+
+        void updateDisplay() {
+            bool currentButtonState = wasButton2Pressed();
+            unsigned long currentTime = millis();
+            
+            // Update display every 500ms OR when button state changes
+            if (currentButtonState != lastButtonState || (currentTime - displayUpdateTimer >= 5000)) {
+                displayUpdateTimer = currentTime;
+                lastButtonState = currentButtonState;
+                isPlaying = currentButtonState;
+                
+                if (isPlaying) {
+                    display.showImage();
+                } else {
+                    displayVoltage();
+                }
+            }
+        }
         
     private:
         const int lineNeoPin = 23;
@@ -114,6 +140,10 @@ class Robot {
         bool button2State = false;
         bool button1Toggle = false;
         bool button2Toggle = false;
+
+        unsigned long displayUpdateTimer = 0;
+        bool lastButtonState = false;
+        bool isPlaying = false; // Track current display mode
 };
 
 #endif

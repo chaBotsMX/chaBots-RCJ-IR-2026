@@ -30,15 +30,11 @@ void setup() {
   robot.setLineNeo(true);
   robot.display.begin();
 
-  Serial.print("Logic Lipo Voltage: "); Serial.println(robot.getLogicLipoVoltage());
-  Serial.print("Power Lipo Voltage: "); Serial.println(robot.getPowerLipoVoltage());
-
   if (!robot.imu.begin(Serial4)) {
     Serial.println("imu not found");
   }
 
-  robot.display.showImage();
-
+  robot.displayVoltage();
 }
 
 void loop() {
@@ -58,8 +54,9 @@ void loop() {
     updateTimer = millis();
     
     robot.updateButtons();
+    robot.updateDisplay();
     
-    //Serial.print("IR Angle: ");Serial.println(irAngle);
+    Serial.print("IR Angle: ");Serial.println(irAngle);
     //Serial.print("IR Distance: ");Serial.println(irDistance);
     //Serial.print("Line Angle: ");Serial.println(lineAngle);
     //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
@@ -67,7 +64,9 @@ void loop() {
     //Serial.print("Camera Confidence: ");Serial.println(cameraConfidence);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
     //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
-    Serial.println(map(float(irDistance), 0.0, 254, 1.0, 0.0));
+    Serial.print("Distance Factor: ");Serial.println(attacker.debug_distanceFactor);
+    Serial.print("Angle Factor: ");Serial.println(attacker.debug_angleFactor);
+    Serial.print("Combined Factor: ");Serial.println(attacker.debug_combinedFactor);
   }
 
   if(robot.wasButton2Pressed()){

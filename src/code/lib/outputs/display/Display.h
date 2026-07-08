@@ -120,6 +120,14 @@ class Display {
         display.display();
     }
 
+	void showText(const String& text, int x, int y, int size = 1) {
+		display.setTextSize(size);
+		display.setTextColor(SSD1306_WHITE);
+		display.setCursor(x, y);
+		display.print(text);
+		display.display();
+	}
+
   private:
     Adafruit_SSD1306 display;
 };

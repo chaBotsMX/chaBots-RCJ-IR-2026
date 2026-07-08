@@ -170,6 +170,11 @@ int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
     // 5. Final Output calculation
     int calculatedPower = minPower + (int)(combinedFactor * (maxPower - minPower));
 
+    // debug
+    debug_distanceFactor = distanceFactor;
+    debug_angleFactor = angleFactor;
+    debug_combinedFactor = combinedFactor;
+
     return constrain(calculatedPower, minPower, maxPower);
 }
 
