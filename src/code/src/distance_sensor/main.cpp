@@ -31,6 +31,6 @@ void loop() {
     posX = localization.getX();
     posY = localization.getY();
 
-    distanceSensor.printDistance(10); // Print every 10ms
-    uart.sendDistance(posX, posY);
+    distanceSensor.printDistance(10, posX, posY); // Print every 10ms
+    uart.sendDistance(posX + localization.fieldWidth / 2, posY + localization.fieldHeight / 2); // Send adjusted position to UART
 }

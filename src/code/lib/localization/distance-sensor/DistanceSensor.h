@@ -29,7 +29,7 @@ class DistanceSensor {
     void update();
     
     // Debug
-    void printDistance(unsigned long timeLimit);
+    void printDistance(unsigned long timeLimit, int posX = 999, int posY = 999);
 
     int16_t getFrontDistance();
     int16_t getBackDistance();

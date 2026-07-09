@@ -153,7 +153,7 @@ int16_t DistanceSensor::getBackDistance()  { return filteredReadings[1]; }
 int16_t DistanceSensor::getLeftDistance()  { return filteredReadings[2]; }
 int16_t DistanceSensor::getRightDistance() { return filteredReadings[3]; }
 
-void DistanceSensor::printDistance(unsigned long timeLimit) {
+void DistanceSensor::printDistance(unsigned long timeLimit, int posX, int posY) {
     static unsigned long lastPrintTime = 0;
     if (millis() - lastPrintTime >= timeLimit) {
         lastPrintTime = millis();
@@ -161,6 +161,8 @@ void DistanceSensor::printDistance(unsigned long timeLimit) {
         if (pairs[0].enabled1) { Serial.print("FRONT: "); Serial.print(filteredReadings[0]); Serial.print("cm | "); }
         if (pairs[0].enabled2) { Serial.print("BACK: ");  Serial.print(filteredReadings[1]); Serial.print("cm | "); }
         if (pairs[1].enabled1) { Serial.print("LEFT: ");  Serial.print(filteredReadings[2]); Serial.print("cm | "); }
-        if (pairs[1].enabled2) { Serial.print("RIGHT: "); Serial.print(filteredReadings[3]); Serial.println("cm"); }
+        if (pairs[1].enabled2) { Serial.print("RIGHT: "); Serial.print(filteredReadings[3]); Serial.print("cm | "); }
+        Serial.print("X: "); Serial.print(posX); Serial.print(" ");
+        Serial.print("Y: "); Serial.print(posY); Serial.println("cm");
     }
 }
