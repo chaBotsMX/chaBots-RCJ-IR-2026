@@ -10,7 +10,7 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int irAngle, int irDistance, int cameraAngle, int cameraDistance, float yaw) {
+MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int irAngle, int irDistance, int cameraAngle, float yaw) {
     MovementCommandAtk cmd;
   
     if(line.lineDetected(currentLineAngle)) {
@@ -23,11 +23,6 @@ MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int 
         cmd.rotation = 0;
     }
     else if(irAngle <= 360) {
-        if(cameraDistance < 100){
-            int offset = cameraAngle - 70;
-            cmd.rotation = yaw + offset;
-        }
-        else{cmd.rotation = 0;}
         //cmd.angle = getBallChasingAngleNoDistance(irAngle, irDistance);
         //cmd.angle = getBallChasingAngle(irAngle, irDistance);
         cmd.angle = getBallChasingAngleNew(irAngle, irDistance);

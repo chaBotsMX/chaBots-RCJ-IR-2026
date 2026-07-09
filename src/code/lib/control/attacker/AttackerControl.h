@@ -32,7 +32,7 @@ class AttackerControl {
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
       int currentLineAngle,
       int irAngle, int irDistance,
-      int cameraAngle, int cameraDistance, float yaw
+      int cameraAngle, float yaw
     );
 
     bool isBallOnFront(int irAngle, int irDistance);

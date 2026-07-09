@@ -22,14 +22,12 @@ class UART {
     int irDistance = 254;
     int lineAngle = 500;
     int cameraAngle = 254;
-    int cameraDistance = 254;
-    int cameraConfidence = 254;
     int distanceX = 254;
     int distanceY = 254;
 
     DataReceiver irReceiver   = DataReceiver(2, 255, 100); //angle and distance
     DataReceiver lineReceiver = DataReceiver(1, 255, 100); // angle
-    DataReceiver cameraReceiver = DataReceiver(3, 255, 100); // bearing, confidence
+    DataReceiver cameraReceiver = DataReceiver(1, 255, 100); // bearing
     DataReceiver distanceReceiver = DataReceiver(2, 255, 100); // x and y
 
     //main
@@ -84,8 +82,6 @@ class UART {
       if(_cameraSerial) cameraReceiver.tick(*_cameraSerial);
       if (cameraReceiver.ready) {
         cameraAngle = cameraReceiver.data[0];
-        cameraDistance = cameraReceiver.data[1];
-        cameraConfidence = cameraReceiver.data[2];
       }
     }
 

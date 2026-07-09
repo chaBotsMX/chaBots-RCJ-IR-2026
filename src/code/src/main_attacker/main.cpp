@@ -16,8 +16,6 @@ int irDistance = 254;
 int lineAngle = 500;
 int pastLineAngle = 500;
 int cameraAngle = 254;
-int cameraDistance = 254;
-int cameraConfidence = 254;
 
 float angularOffset = 0;
 
@@ -47,8 +45,6 @@ void loop() {
   irDistance = uart.irDistance;
   lineAngle = uart.lineAngle*2;
   cameraAngle = uart.cameraAngle;
-  cameraDistance = uart.cameraDistance;
-  cameraConfidence = uart.cameraConfidence;
 
   if(millis() - updateTimer >= 10){
     updateTimer = millis();
@@ -70,7 +66,7 @@ void loop() {
   }
 
   if(robot.wasButton2Pressed()){
-    atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, cameraDistance, robot.imu.getYaw());
+    atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, robot.imu.getYaw());
 
     if(robot.imu.update()) yawCorrection = robot.getYawCorrection(atkCmd.rotation);
 
