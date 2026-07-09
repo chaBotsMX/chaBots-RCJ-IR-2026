@@ -3,7 +3,7 @@
 #include "UART.h"
 
 Robot robot;
-UART uart (Serial8, Serial5, Serial2);
+UART uart (Serial8, Serial5, Serial2, Serial7);
 AttackerControl attacker;
 MovementCommandAtk atkCmd;
 

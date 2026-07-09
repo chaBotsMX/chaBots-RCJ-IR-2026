@@ -9,32 +9,25 @@
 #define Localization_H
 
 #include <Arduino.h>
-#include <distance-sensor/DistanceSensor.h>
 
 class Localization {
   public:
-    int frontDistance = 999, backDistance = 999, leftDistance = 999, rightDistance = 999;
-    int x = 999, y = 999;
+    Localization() {};
 
-    DistanceSensor distanceSensor;
-    Localization() : distanceSensor() {};
+    void update(int _frontDistance, int _backDistance, int _leftDistance, int _rightDistance) {
+      if (isVerticalDistanceValid(_frontDistance, _backDistance)) y = (_backDistance - _frontDistance) / 2;
+      else y = 254; // Invalid vertical distance readings
 
-    std::pair<int, int> getBotPosition(){
-      frontDistance = distanceSensor.getFrontDistance();
-      backDistance = distanceSensor.getBackDistance();
-      leftDistance = distanceSensor.getLeftDistance();
-      rightDistance = distanceSensor.getRightDistance();
-
-      if (isVerticalDistanceValid(frontDistance, backDistance)) y = (backDistance - frontDistance) / 2;
-      else y = 999; // Invalid vertical distance readings
-
-      if (isHorizontalDistanceValid(leftDistance, rightDistance)) x = (leftDistance - rightDistance) / 2;
-      else x = 999; // Invalid horizontal distance readings
-
-      return {x, y};
+      if (isHorizontalDistanceValid(_leftDistance, _rightDistance)) x = (_leftDistance - _rightDistance) / 2;
+      else x = 254; // Invalid horizontal distance readings
     }
 
+    int getX() { return x; }
+    int getY() { return y; }
+
   private:
+    int x = 254; // X position of the robot in cm (0,0) is the center of the field
+    int y = 254; // Y position of the robot in cm (0,0) is the center of the field
     const int fieldWidth = 158; // cm
     const int fieldHeight = 219; // cm
 

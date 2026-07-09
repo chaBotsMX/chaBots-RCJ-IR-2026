@@ -11,6 +11,15 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+// ============================================================================
+// SENSOR ENABLE/DISABLE - Set which individual sensors are connected
+// ============================================================================
+#define ENABLE_FRONT    false   // Pair 0, Sensor 1
+#define ENABLE_BACK     true    // Pair 0, Sensor 2
+#define ENABLE_LEFT     false   // Pair 1, Sensor 1
+#define ENABLE_RIGHT    true    // Pair 1, Sensor 2
+// ============================================================================
+
 class DistanceSensor {
   public:
     DistanceSensor();
@@ -34,14 +43,16 @@ class DistanceSensor {
         uint8_t addr2;         // Opposite sensor I2C address
         uint8_t configByte;    // Mode and Range configuration (0x07 register)
         unsigned long delayMs; // Required physical wave flight timeout
+        bool enabled1;         // Enable first sensor
+        bool enabled2;         // Enable second sensor
     };
 
     // Sensor mapping parameters
-    const SensorPair pairs[2] = {
+    SensorPair pairs[2] = {
         // Pair 0: Front & Back. Field dimension needs ~230cm -> config 300cm (0x10), 25ms flight time
-        {0x11, 0x12, 0x10, 25}, 
+        {0x11, 0x12, 0x10, 25, ENABLE_FRONT, ENABLE_BACK}, 
         // Pair 1: Left & Right. Field dimension needs ~140cm -> config 150cm (0x00), 15ms flight time
-        {0x13, 0x14, 0x00, 15}
+        {0x13, 0x14, 0x00, 15, ENABLE_LEFT, ENABLE_RIGHT}
     };
 
     // State machine management

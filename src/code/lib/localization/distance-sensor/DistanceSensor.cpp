@@ -28,19 +28,23 @@ void DistanceSensor::begin() {
 
     // Configure pairs according to physical field depth constraints
     for (int i = 0; i < 2; i++) {
-        // Write configurations to Address 1
-        Wire.beginTransmission(pairs[i].addr1);
-        Wire.write(0x07); // eCFG_INDEX register
-        Wire.write(pairs[i].configByte);
-        Wire.endTransmission();
-        delay(1); // Physical write hardware buffer delay
+        // Configure first sensor if enabled
+        if (pairs[i].enabled1) {
+            Wire.beginTransmission(pairs[i].addr1);
+            Wire.write(0x07); // eCFG_INDEX register
+            Wire.write(pairs[i].configByte);
+            Wire.endTransmission();
+            delay(1); // Physical write hardware buffer delay
+        }
 
-        // Write configurations to Address 2
-        Wire.beginTransmission(pairs[i].addr2);
-        Wire.write(0x07); 
-        Wire.write(pairs[i].configByte);
-        Wire.endTransmission();
-        delay(1);
+        // Configure second sensor if enabled
+        if (pairs[i].enabled2) {
+            Wire.beginTransmission(pairs[i].addr2);
+            Wire.write(0x07); 
+            Wire.write(pairs[i].configByte);
+            Wire.endTransmission();
+            delay(1);
+        }
     }
     
     stateTimer = millis();
@@ -76,22 +80,30 @@ void DistanceSensor::update() {
 }
 
 void DistanceSensor::triggerPairPings(const SensorPair& pair) {
-    // Simultaneously request triggers across both independent paths 
-    Wire.beginTransmission(pair.addr1);
-    Wire.write(0x08); // eCMD_INDEX
-    Wire.write(0x01); // CMD_DISTANCE_MEASURE
-    Wire.endTransmission();
+    // Simultaneously request triggers across both independent paths (if enabled)
+    if (pair.enabled1) {
+        Wire.beginTransmission(pair.addr1);
+        Wire.write(0x08); // eCMD_INDEX
+        Wire.write(0x01); // CMD_DISTANCE_MEASURE
+        Wire.endTransmission();
+    }
 
-    Wire.beginTransmission(pair.addr2);
-    Wire.write(0x08); 
-    Wire.write(0x01); 
-    Wire.endTransmission();
+    if (pair.enabled2) {
+        Wire.beginTransmission(pair.addr2);
+        Wire.write(0x08); 
+        Wire.write(0x01); 
+        Wire.endTransmission();
+    }
 }
 
 void DistanceSensor::readPairData(const SensorPair& pair, int index1, int index2) {
-    // Gather newest hardware measurements
-    rawReadings[index1] = requestRegisterValue(pair.addr1);
-    rawReadings[index2] = requestRegisterValue(pair.addr2);
+    // Gather newest hardware measurements (only from enabled sensors)
+    if (pair.enabled1) {
+        rawReadings[index1] = requestRegisterValue(pair.addr1);
+    }
+    if (pair.enabled2) {
+        rawReadings[index2] = requestRegisterValue(pair.addr2);
+    }
 
     // Shift window variables down to insert new data inside 3-sample median array
     for (int idx : {index1, index2}) {
@@ -145,9 +157,10 @@ void DistanceSensor::printDistance(unsigned long timeLimit) {
     static unsigned long lastPrintTime = 0;
     if (millis() - lastPrintTime >= timeLimit) {
         lastPrintTime = millis();
-        Serial.print("FRONT: ");   Serial.print(filteredReadings[0]); Serial.print("cm | ");
-        Serial.print("BACK: ");    Serial.print(filteredReadings[1]); Serial.print("cm | ");
-        Serial.print("LEFT: ");    Serial.print(filteredReadings[2]); Serial.print("cm | ");
-        Serial.print("RIGHT: ");   Serial.print(filteredReadings[3]); Serial.println("cm");
+        
+        if (pairs[0].enabled1) { Serial.print("FRONT: "); Serial.print(filteredReadings[0]); Serial.print("cm | "); }
+        if (pairs[0].enabled2) { Serial.print("BACK: ");  Serial.print(filteredReadings[1]); Serial.print("cm | "); }
+        if (pairs[1].enabled1) { Serial.print("LEFT: ");  Serial.print(filteredReadings[2]); Serial.print("cm | "); }
+        if (pairs[1].enabled2) { Serial.print("RIGHT: "); Serial.print(filteredReadings[3]); Serial.println("cm"); }
     }
 }
