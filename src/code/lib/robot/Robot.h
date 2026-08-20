@@ -9,6 +9,7 @@
 #include "LineAvoiding.h"
 #include "attacker/AttackerControl.h"
 #include "goalkeeper/GoalkeeperControl.h"
+#include "display/Display.h"
 
 class Robot {
     public:
@@ -17,46 +18,34 @@ class Robot {
         IMU imu;
         PD pd;
         LineAvoiding lineAvoiding;
-
-        AttackerControl attacker;
-        GoalkeeperControl goalkeeper;
-
-        MovementCommandAtk atkCmd;
-        MovementCommandGk gkCmd;
+        
+        Display display;
     
-        Robot() : pd(4, 0.1, 100) {
+        Robot() : pd(4, 0.1, 180) {
             pinMode(lineNeoPin, OUTPUT);
             pinMode(button1Pin, INPUT); pinMode(button2Pin, INPUT);
         }
 
         float getLogicLipoVoltage(){
-            return analogRead(logicLipoVoltagePin); //((analogRead(logicLipoVoltagePin) * 3.3) / 1023.0) * 2 ;
+            return map(float(analogRead(logicLipoVoltagePin)), 0.0, 1023.0, 0.0, 3.3) * 2;
         }
 
         float getPowerLipoVoltage(){
-            return analogRead(powerLipoVoltagePin) /* * (5.0 / 1023.0) * 2 */;
-        }
-        
-        void updateAttackerControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, bool gk){
-            atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, gk);
-        }
-
-        void updateGoalkeeperControl(int irAngle, int irDistance, int lineAngle, int cameraAngle, float yaw){
-            gkCmd = goalkeeper.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, yaw);
+            return map(float(analogRead(powerLipoVoltagePin)), 0.0, 1023.0, 0.0, 3.3) * 5;
         }
 
         bool hasBall(int irAngle, int irDistance){
             static unsigned long ballSeenSince = 0;
             static bool tracking = false;
 
-            bool currentBallState = ((irAngle >= 85 and irAngle <= 95) and irDistance < 100); // Ball in front and close
+            bool currentBallState = ((irAngle >= 80 and irAngle <= 100) and irDistance < 20); // Ball in front and close
 
             if (currentBallState) {
                 if (!tracking) {
                     ballSeenSince = millis();
                     tracking = true;
                 }
-                if (millis() - ballSeenSince >= 80) {
+                if (millis() - ballSeenSince >= 120) {
                     return true;
                 }
             } else {
@@ -101,18 +90,37 @@ class Robot {
             return button2Toggle;
         }
 
-        int getYawCorrection(int cameraAngle, int irAngle, int irDistance){
-            float setpoint = 0; // Desired yaw angle (e.g., facing forward)
+        int getYawCorrection(float setpoint = 0) { // Desired yaw angle (e.g., facing forward)
             float currentYaw = imu.getYaw();
-            if(wasButton1Pressed()) setpoint = currentYaw;
+            //if(wasButton1Pressed()) setpoint = currentYaw;
             float error = currentYaw - setpoint;
-            float offset = 0;
-            if(attacker.robotHasBall(irAngle, irDistance) and cameraAngle <= 140){
-                if(cameraAngle < 50) offset = 40; // Ball on left, turn slightly left
-                else if(cameraAngle > 90) offset = -40; // Ball on right, turn slightly right
-                else offset = 0;
-            };
-            return pd.getCorrection(error - offset);
+            return pd.getCorrection(error);
+        }
+
+        void displayVoltage(){
+            display.clear();
+            display.showText(String(getLogicLipoVoltage()) + "V", 5, 5, 2);
+            display.showText("Logic", 5, 25, 1);
+            display.showText(String(getPowerLipoVoltage()) + "V", 5, 35, 2);
+            display.showText("Power", 5, 55, 1);
+        }
+
+        void updateDisplay() {
+            bool currentButtonState = wasButton2Pressed();
+            unsigned long currentTime = millis();
+            
+            // Update display every 500ms OR when button state changes
+            if (currentButtonState != lastButtonState || (currentTime - displayUpdateTimer >= 5000)) {
+                displayUpdateTimer = currentTime;
+                lastButtonState = currentButtonState;
+                isPlaying = currentButtonState;
+                
+                if (isPlaying) {
+                    display.showImage();
+                } else {
+                    displayVoltage();
+                }
+            }
         }
         
     private:
@@ -121,8 +129,8 @@ class Robot {
         const int logicLipoVoltagePin = 41;
         const int powerLipoVoltagePin = 26;
 
-        const int button1Pin = 30;
-        const int button2Pin = 27;
+        const int button1Pin = 32;
+        const int button2Pin = 33;
 
         const int buzzerPin = 4;
 
@@ -132,6 +140,10 @@ class Robot {
         bool button2State = false;
         bool button1Toggle = false;
         bool button2Toggle = false;
+
+        unsigned long displayUpdateTimer = 0;
+        bool lastButtonState = false;
+        bool isPlaying = false; // Track current display mode
 };
 
 #endif

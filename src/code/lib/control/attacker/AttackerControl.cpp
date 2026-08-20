@@ -10,114 +10,170 @@
 
 AttackerControl::AttackerControl() {}
 
-MovementCommandAtk AttackerControl::calculateMovement(int lineAngle, int irAngle, int irDistance, int cameraAngle, bool gk) {
+MovementCommandAtk AttackerControl::calculateMovement(int currentLineAngle, int irAngle, int irDistance, int cameraAngle, float yaw) {
     MovementCommandAtk cmd;
   
-    if(lineAngle <= 360) {
-        cmd.angle = line.getAvoidLineAngle(lineAngle);
+    if(line.lineDetected(currentLineAngle)) {
+        if(!firstDetected) {
+            initialLineAngle = currentLineAngle;
+            firstDetected = true;
+        }
+        cmd.angle = line.getAvoidLineAngle(currentLineAngle, initialLineAngle);
         cmd.power = 100; // Line detected
+        cmd.rotation = 0;
     }
-    else if(isBallOnFront(irAngle)) {
-        cmd.angle = irAngle;
-        cmd.power = 130; // Ball in front
-    }
-    else if(isBallClose(irDistance)) {
-        cmd.angle = adjustBallAngleClose(irAngle);        
-        cmd.power = calculateOrbitPower(irAngle, irDistance);
-    }
-    else if(ballDetected(irAngle)) {
-        cmd.angle = irAngle;
-        cmd.power = 90 + irDistance * 0.1; // Ball detected
+    else if(irAngle <= 360) {
+        //cmd.angle = getBallChasingAngleNoDistance(irAngle, irDistance);
+        //cmd.angle = getBallChasingAngle(irAngle, irDistance);
+        cmd.angle = getBallChasingAngleNew(irAngle, irDistance);
+        cmd.power = getBallChasingPower(irAngle, irDistance);
+        firstDetected = false; // Reset line detection when ball is detected
     }
     else {
         cmd.angle = 0;
         cmd.power = 0; // No ball detected
+        cmd.rotation = 0;
+        firstDetected = false; // Reset line detection when no ball is detected
     }
   
     return cmd;
 }
 
-bool AttackerControl::ballDetected(int irAngle) {
-    if(irAngle <= 360) return true;
-    return false;
+int AttackerControl::getBallChasingAngle(int irAngle, int irDistance) {
+    if(isBallOnFront(irAngle, irDistance)) return 90; // Ball is close, go straight
+    int xBall = irDistance * cos(radians(irAngle));
+    int yBall = irDistance * sin(radians(irAngle));
+
+    double t = ((xBall * xBall) + (yBall * yBall - kIRDistanceOffset)) / ((xBall * xBall) + (yBall - kIRDistanceOffset) * (yBall - kIRDistanceOffset));
+    t = max(0.0, min(1.0, t)); // Clamp t to [0, 1]
+    int xClosest = xBall * t;
+    int yClosest = (yBall - kIRDistanceOffset) * t;
+
+    bool shouldOrbit = ((xClosest - xBall) * (xClosest - xBall) + (yClosest - yBall) * (yClosest - yBall)) < (kAvoidDistance * kAvoidDistance);
+
+    if (shouldOrbit) {
+        int offsetAngle = asin(kIRDistanceOffset / irDistance);
+        if(irAngle > 270 or irAngle < 90) return irAngle - offsetAngle;
+        return irAngle + offsetAngle;
+    }
+    return (int)degrees(atan2(yBall - kIRDistanceOffset, xBall));
 }
 
-int AttackerControl::adjustBallAngleClose(int irAngle){
+int AttackerControl::getBallChasingAngleNoDistance(int irAngle, int irDistance) {
     if(irAngle > 360 || irAngle < 0){
         return 500;  // Invalid angle
     }
-            
+    
+    if(isBallOnFront(irAngle, irDistance)) return 90; // Ball is close, go straight
+    
+    if(irDistance > 210) return irAngle;
+    
     // Right side
-    if(irAngle > 270 || irAngle < 80){
+    if(irAngle > 270 || irAngle < 75){
         int adjusted = irAngle - 90;
         // Fix negative modulo
         if(adjusted < 0) adjusted += 360;
         return adjusted;
     }
     // Left side
-    else if(irAngle > 100 && irAngle < 270){
+    else if(irAngle > 105 && irAngle < 270){
         int adjusted = irAngle + 90;
         // Handle wrap-around
         if(adjusted >= 360) adjusted -= 360;
         return adjusted;
     }
-    // Front
     else{
-        return 90;
+        return 90; // Ball is directly in front, go straight
     }
 }
 
-bool AttackerControl::isBallOnFront(int irAngle){
-    if(irAngle >= 75 and irAngle <= 105) return true;
-    return false;
-}
-
-bool AttackerControl::isBallClose(int irDistance){
-    if(irDistance < 190) return true;
-    return false;
-}
-
-int AttackerControl::calculateOrbitPower(int irAngle, int irDistance) {
-    int angleFromFront = irAngle - 90;
-        
-    // normalize
-    if(angleFromFront > 180) angleFromFront -= 360;
-    if(angleFromFront < -180) angleFromFront += 360;
-        
-    int absOffset = abs(angleFromFront);
-
-    int minPower = 70;   // Power when ball exactly at 90°
-    int midPower = 90;  // Power when ball at sides
-    int maxPower = 110;  // Power when ball behind
-        
-    int basePower;
+int AttackerControl::getBallChasingAngleNew(int irAngle, int irDistance) {
+    float proximity = map(float(irDistance), 0.0, 90, 1.0, 0.0); // Closer ball gives higher proximity
     
-    if(absOffset < 30) {
-        basePower = minPower;
+    if(irAngle > 270 || irAngle < apertureLeft){ //right side
+        int adjusted = irAngle - (90 * proximity); // Adjust angle based on proximity
+        // Fix negative modulo
+        if(adjusted < 0) adjusted += 360;
+        return adjusted;
     }
-    else if(absOffset < 60){
-        basePower = midPower * 0.8;
+    // Left side
+    else if(irAngle > apertureRight && irAngle < 270){
+        int adjusted = irAngle + (90 * proximity);
+        // Handle wrap-around
+        if(adjusted >= 360) adjusted -= 360;
+        return adjusted;
     }
-    else if(absOffset < 90) {
-        basePower = midPower;
+    else{
+        return irAngle;
     }
-    else {
-        basePower = maxPower;
-    }
-    
-    int finalPower = (int)(basePower);
-    
-    return constrain(finalPower, minPower, maxPower);
 }
 
-float AttackerControl::getAngularOffset(int cameraAngle){
-    if(cameraAngle <= 140){
-        return cameraAngle - 70;
+/* int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+    // If the ball is completely lost, safe return to minimum power or 0
+    if (irDistance > 90) return minPower;
+
+    // 1. Constrain raw distance to the valid 0-90 scale just in case
+    int constrainedDist = constrain(irDistance, 0, 90);
+
+    // 2. Map distance directly to power: 
+    // 0 (closest) -> minPower
+    // 90 (furthest) -> maxPower
+    int calculatedPower = map(constrainedDist, 0, 90, minPower, maxPower);
+
+    // 3. Override rule: If the ball is right in front, charge! 
+    if (isBallOnFront(irAngle, irDistance)) {
+        return maxPower; 
     }
-    return 0;
+
+    return calculatedPower;
+} */
+
+int AttackerControl::getBallChasingPower(int irAngle, int irDistance) {
+    if (irDistance > maxDistance) return minPower;
+
+    // 1. Calculate the shortest angular error from the front (90 degrees)
+    int angleError = abs(irAngle - 90);
+    if (angleError > 180) {
+        angleError = 360 - angleError;
+    }
+
+    // 2. Base Factors (0.0 to 1.0)
+    float distanceFactor = constrain(irDistance, 0, maxDistance) / maxDistance;
+    float angleFactor = angleError / 180.0f;
+
+    // 3. The "Front-Channel Strike" Modification
+    // If the ball is closely lined up with the front (+/- 15 degrees) 
+    // and within striking distance (< 80)
+    if (angleError <= 20 && irDistance < 60) {
+        // Invert the distance so: 0 (closest) -> 1.0, 80 (limit) -> 0.0
+        float proximity = (60.0f - constrain(irDistance, 0, 60)) / 60.0f;
+        
+        // Boost the distance factor using a smooth curve.
+        // As proximity approaches 1.0 (very close), distanceFactor drops to 0 
+        // normally, but we blend in this boost to force the power higher.
+        distanceFactor = distanceFactor + (proximity * 0.6f); 
+        if (distanceFactor > 1.0f) distanceFactor = 1.0f;
+        
+        // Visually/Logically: This forces the robot to ignore the "slow down 
+        // when close" rule ONLY when the ball is perfectly lined up to be captured.
+    }
+
+    // 4. Combine with your tuned weights
+    const float DISTANCE_WEIGHT = 0.65f;
+    float combinedFactor = (distanceFactor * DISTANCE_WEIGHT) + (angleFactor * (1.0f - DISTANCE_WEIGHT));
+
+    // 5. Final Output calculation
+    int calculatedPower = minPower + (int)(combinedFactor * (maxPower - minPower));
+
+    // debug
+    debug_distanceFactor = distanceFactor;
+    debug_angleFactor = angleFactor;
+    debug_combinedFactor = combinedFactor;
+
+    return constrain(calculatedPower, minPower, maxPower);
 }
 
-bool AttackerControl::robotHasBall(int irAngle, int irDistance){
-    if((irAngle >= 80 and irAngle <= 100) and irDistance < 140) return true;
+bool AttackerControl::isBallOnFront(int irAngle, int irDistance) {
+    if((irAngle >= apertureLeft and irAngle <= apertureRight) and irDistance < 80) return true;
     return false;
 }

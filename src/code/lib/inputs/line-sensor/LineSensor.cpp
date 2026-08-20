@@ -18,22 +18,22 @@ void LineSensor::begin(){
   analogWrite(vref[0], 200);
   analogWrite(vref[1], 200);
   analogWrite(vref[2], 200);
-  analogWrite(vref[3], 240);
+  analogWrite(vref[3], 200);
 
   pixels.begin();
   pixels.clear();
 
   for(int i = 0; i < numSensors; i++){
+    if(i%2 == 0) continue;
     unsigned long start = millis();
     while(millis() - start < 20){}
-    pixels.setPixelColor(i, pixels.Color(250, 0, 0));
+    pixels.setPixelColor(i, pixels.Color(150, 150, 150));
     pixels.show();
   }
 }
 
 void LineSensor::update(){
   for(int i = 0; i < numSensors; i++){
-    if(i > 12 and i < 21){readings[i] == 0; continue;}
     readings[i] = digitalReadFast(comparators[i]);
   }
   calculateLineVector();

@@ -10,20 +10,16 @@ int angle = 0;
 unsigned long timer;
 
 void setup() {
+  delay(200);
   Serial.begin(115200);
   ls.begin();
   uart.beginLine(2000000);
-  delay(1000);
 }
 
 void loop() {
-    ls.update();
-    ls.printLS(100); //print readings every 100ms
+  ls.update();
+  ls.printLS(100); //print readings every 100ms
 
-    if(millis() > timer){
-        timer = millis() + 2;
-
-        angle = ls.getAngle();
-        uart.sendLine(angle);
-    }
+  angle = ls.getAngle();
+  uart.sendLine(angle);
 }

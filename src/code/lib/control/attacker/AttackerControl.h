@@ -15,6 +15,7 @@
 struct MovementCommandAtk {
   int angle;        // 0-360 degrees
   int power;          // 0-250
+  int rotation;
 };
 
 class AttackerControl {
@@ -29,25 +30,42 @@ class AttackerControl {
      * @return MovementCommand with angle and power
      */
     MovementCommandAtk calculateMovement( //recieves params, returns movement command function
-      int lineAngle,
+      int currentLineAngle,
       int irAngle, int irDistance,
-      int cameraAngle,
-      bool gk
+      int cameraAngle, float yaw
     );
 
-    float getAngularOffset(int cameraAngle);
-
-    bool isBallOnFront(int irAngle);
+    bool isBallOnFront(int irAngle, int irDistance);
 
     bool robotHasBall(int irAngle, int irDistance);
+
+    float debug_distanceFactor;
+    float debug_angleFactor;
+    float debug_combinedFactor;
 
     LineAvoiding line;
     
   private:
-    bool ballDetected(int irAngle);
-    int adjustBallAngleClose(int irAngle);
-    bool isBallClose(int irDistance);
-    int calculateOrbitPower(int irAngle, int irDistance);
+    const int kIRDistanceOffset = 180; //
+    const int kAvoidDistance = 170; //
+
+    const int maxPower = 220;
+    const int minPower = 80;
+
+    const int apertureLeft = 80;
+    const int apertureRight = 100;
+
+    const float maxDistance = 100.0;
+
+    const float kPowerP = 0.1;
+
+    bool firstDetected = false;
+    int initialLineAngle = 500;
+
+    int getBallChasingAngle(int irAngle, int irDistance);
+    int getBallChasingAngleNoDistance(int irAngle, int irDistance);
+    int getBallChasingAngleNew(int irAngle, int irDistance);
+    int getBallChasingPower(int irAngle, int irDistance);
 };
 
 #endif

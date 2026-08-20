@@ -1,50 +1,130 @@
 # front_camera.py
 
-import sensor, time
+import csi
+import time
 from pyb import UART
 
-sensor.set_contrast(0)
-sensor.set_brightness(0)
-sensor.set_saturation(0)
+TARGET = "YELLOW"
 
-sensor.set_auto_gain(False, gain_db=20)  # Fixed gain
-sensor.set_auto_rotation(False)
+YELLOW_THRESHOLD = (81, 100, -16, 127, 15, 127)
+BLUE_THRESHOLD = (0, 21, -10, 127, -128, 0)
+THRESHOLDS = [YELLOW_THRESHOLD, BLUE_THRESHOLD]
 
-sensor.reset()
-sensor.set_pixformat(sensor.RGB565)
-sensor.set_framesize(sensor.QVGA)
+CROP_FROM_TOP = 70
 
-sensor.skip_frames(time=2000)
+ROI = (0, CROP_FROM_TOP, 320, 240 - CROP_FROM_TOP)
+
+FOV_HORIZONTAL = 71.8
+DEGREES_IN_PIXEL = FOV_HORIZONTAL / 320
+
+BOTTOM_CENTER_X = 160
+BOTTOM_CENTER_Y = 239
+
+# Init CSI Camera
+csi0 = csi.CSI()
+
+csi0.sleep(True)
+time.sleep(0.01)
+
+csi0.reset()
+csi0.pixformat(csi.RGB565)
+csi0.framesize(csi.QVGA)
+
+csi0.vflip(True)
+
+csi0.auto_gain(False, gain_db=22)
+# csi0.auto_whitebal(False, rgb_gain_db=(4.2, 0.0, 4.0))
+# csi0.auto_exposure(False, exposure_us=20000)
+
+# Warm up / skip initial frames
+csi0.snapshot(time=1500)
+
+# csi0.window(ROI)
 
 clock = time.clock()
 
-yellow_threshold = (50, 100, 11, 127, 39, 127)
-#yellow_threshold = (36, 100, 19, 127, 40, 127) #hotel
-blue_threshold = (0, 32, -2, 23, -128, 0)
-
-roi = (0, 80, 320, 80)
-
-FOV = 140
-
-approximate_angle = 200
-
 uart = UART(3, 115200, timeout_char=0)
 
-sensor.set_windowing(roi)
+angle = 254
+distance = 254
+confidence = 254
+
+
+def process_goal(blobs):
+    if not blobs:
+        return None
+
+    largest_blob = max(blobs, key=lambda b: b.pixels)
+
+    if largest_blob.pixels < 150:
+        return None
+
+    angle = int((largest_blob.cx - 160) * (DEGREES_IN_PIXEL))
+
+    dx = largest_blob.cx - BOTTOM_CENTER_X
+    dy = largest_blob.cy - BOTTOM_CENTER_Y
+    distance = int((dx**2 + dy**2) ** 0.5)
+
+    aspect_ratio = largest_blob.w / largest_blob.h
+    confidence = int((aspect_ratio * 100) / 2.5)
+
+    return (angle, distance, confidence, largest_blob)
+
 
 while True:
     clock.tick()
-    img = sensor.snapshot()
+    img = csi0.snapshot()
 
-    for blob in img.find_blobs([yellow_threshold], pixels_threshold=5, area_threshold=3000):
-        if blob is not None:
-            approximate_angle = int((blob.cx() * FOV) / 320)
+    img.lens_corr(strength=1.8)
 
-            img.draw_rectangle(blob.rect())
-            img.draw_cross(blob.cx(), blob.cy())
-        else:
-            approximate_angle = 200
+    if TARGET == "YELLOW":
+        current_goal = process_goal(
+            img.find_blobs(
+                [YELLOW_THRESHOLD],
+                pixels_threshold=100,
+                merge=True,
+                x_stride=4,
+                y_stride=2,
+            )
+        )
+    else:
+        current_goal = process_goal(
+            img.find_blobs(
+                [BLUE_THRESHOLD],
+                pixels_threshold=100,
+                merge=True,
+                x_stride=4,
+                y_stride=2,
+            )
+        )
 
-    print(approximate_angle, clock.fps())
-    uart.write(bytes([255]))
-    uart.write(bytes([approximate_angle]))
+    if current_goal:
+        angle, distance, confidence, goal_blob = current_goal
+        img.draw_rectangle(goal_blob.rect)
+
+        # Visual Overlay: Draw tracking line from bottom-center to goal center
+        img.draw_line(
+            (BOTTOM_CENTER_X, BOTTOM_CENTER_Y, goal_blob.cx, goal_blob.cy), thickness=2
+        )
+
+        # Visual Overlay: Draw target center point
+        img.draw_cross(
+            (goal_blob.cx, goal_blob.cy), size=5
+        )
+
+    else:
+        angle = 254
+        distance = 254
+        confidence = 254
+        goal_blob = None
+
+    received = 0
+    while uart.any():
+        received = uart.read(1)[0]
+
+    if received == 255:
+        uart.write(bytes([angle + 70]))
+        uart.write(bytes[distance])
+        uart.write(bytes[confidence])
+
+    print("Angle:", angle, "Dist:", distance, "FPS:", clock.fps())

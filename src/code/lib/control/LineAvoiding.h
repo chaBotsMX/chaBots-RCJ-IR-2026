@@ -12,24 +12,12 @@ class LineAvoiding {
             return false;
         }
 
-        void update(int lineAngle){
-            if(!recovering){
-                if(lineDetected(lineAngle)){
-                    recoveryAngle = (lineAngle + 180) % 360;
-                    recoveryStartTime = millis();
-                    recovering = true;
-                }
-            }
+        boolean isInverted = false;
 
-            if(recovering){
-                if(millis() - recoveryStartTime >= 500) recovering = false;
-            }
-        }
-
-        int getAvoidLineAngle(int lineAngle){
-            update(lineAngle);
-            if(recovering) return recoveryAngle;
-            return 500;
+        int getAvoidLineAngle(int currentLineAngle, int pastLineAngle){
+            float dotProduct = cos(radians(pastLineAngle - currentLineAngle));
+            if(dotProduct < 0) return (pastLineAngle + 180) % 360; // if flipped
+            return (currentLineAngle + 180) % 360;
         }
 
     private:

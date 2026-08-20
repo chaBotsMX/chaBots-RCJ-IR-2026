@@ -3,7 +3,9 @@
 #include "UART.h"
 
 Robot robot;
-UART uart (Serial8, Serial5, Serial2);
+UART uart (Serial8, Serial5, Serial2, Serial7);
+AttackerControl attacker;
+MovementCommandAtk atkCmd;
 
 unsigned long long updateTimer = 0;
 
@@ -12,7 +14,8 @@ int yawCorrection = 0;
 int irAngle = 500;
 int irDistance = 254;
 int lineAngle = 500;
-int cameraAngle = 200;
+int pastLineAngle = 500;
+int cameraAngle = 254;
 
 float angularOffset = 0;
 
@@ -23,20 +26,19 @@ void setup() {
   uart.beginCamera(115200);
 
   robot.setLineNeo(true);
+  robot.display.begin();
 
-  Serial.print("Logic Lipo Voltage: "); Serial.println(robot.getLogicLipoVoltage());
-  Serial.print("Power Lipo Voltage: "); Serial.println(robot.getPowerLipoVoltage());
-
-  delay(1000);
-
-  if (!robot.imu.begin(Serial7)) {
+  if (!robot.imu.begin(Serial4)) {
     Serial.println("imu not found");
   }
 
+  robot.displayVoltage();
 }
 
 void loop() {
-  uart.receive();
+  uart.receiveIR();
+  uart.receiveLine();
+  uart.receiveCamera();
   robot.kicker.update();
 
   irAngle = uart.irAngle*2;
@@ -48,20 +50,27 @@ void loop() {
     updateTimer = millis();
     
     robot.updateButtons();
+    robot.updateDisplay();
     
     Serial.print("IR Angle: ");Serial.println(irAngle);
     //Serial.print("IR Distance: ");Serial.println(irDistance);
-    Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("Line Angle: ");Serial.println(lineAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Distance: ");Serial.println(cameraDistance);
+    //Serial.print("Camera Confidence: ");Serial.println(cameraConfidence);
     //Serial.print("Yaw: "); Serial.println(robot.imu.getYaw());
-    Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    //Serial.print("Camera Angle: ");Serial.println(cameraAngle);
+    Serial.print("Distance Factor: ");Serial.println(attacker.debug_distanceFactor);
+    Serial.print("Angle Factor: ");Serial.println(attacker.debug_angleFactor);
+    Serial.print("Combined Factor: ");Serial.println(attacker.debug_combinedFactor);
   }
 
-  if(robot.imu.update()) yawCorrection = robot.getYawCorrection(cameraAngle, irAngle, irDistance);
-
   if(robot.wasButton2Pressed()){
-    robot.updateAttackerControl(irAngle, irDistance, lineAngle, cameraAngle, false);
+    atkCmd = attacker.calculateMovement(lineAngle, irAngle, irDistance, cameraAngle, robot.imu.getYaw());
 
-    robot.drive.driveToAngle(robot.atkCmd.angle, robot.atkCmd.power, yawCorrection);
+    if(robot.imu.update()) yawCorrection = robot.getYawCorrection(atkCmd.rotation);
+
+    robot.drive.driveToAngle(atkCmd.angle, atkCmd.power, yawCorrection);
 
     if(robot.hasBall(irAngle, irDistance)){
       robot.kicker.kick();

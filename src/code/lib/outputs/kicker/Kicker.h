@@ -23,7 +23,7 @@ class Kicker {
     };
 
     void kick(){
-      if(!isActive && millis() - intervalTimer >= 2000){
+      if(!isActive && millis() - intervalTimer >= 1000){
         digitalWrite(kicker, HIGH);
         intervalTimer = millis();
         kickingTimer = millis();
